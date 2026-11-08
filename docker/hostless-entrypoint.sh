@@ -10,9 +10,11 @@ export PATH="/command:/opt/hermes/bin:/opt/hermes/.venv/bin:$HERMES_HOME/.local/
 umask 077
 
 echo "[hostless-start] preparing writable Hermes home at $HERMES_HOME"
-mkdir -p "$HERMES_HOME"
-chown hermes:hermes "$HERMES_HOME"
 as_hermes() { /command/s6-setuidgid hermes "$@"; }
+
+# Do not chown: Hostless drops the capability required to change ownership.
+# Create the home as the Hermes service user so it owns its files naturally.
+as_hermes mkdir -p "$HERMES_HOME"
 
 # Require remote persistence before starting on ephemeral storage.
 if [ -z "${DBBYTE_ACCESS_KEY_ID:-}" ] || [ -z "${DBBYTE_SECRET_ACCESS_KEY:-}" ] || [ -z "${HERMES_BACKUP_ENCRYPTION_PASSPHRASE:-}" ]; then
@@ -37,12 +39,12 @@ if [ ! -f "$HERMES_HOME/.env" ]; then as_hermes touch "$HERMES_HOME/.env"; fi
 if [ ! -f "$HERMES_HOME/SOUL.md" ] && [ -f /opt/hermes/docker/SOUL.md ]; then
   as_hermes cp /opt/hermes/docker/SOUL.md "$HERMES_HOME/SOUL.md"
 fi
-chmod 600 "$HERMES_HOME/.env"
+as_hermes chmod 600 "$HERMES_HOME/.env"
 
 # Ensure the local gateway control API key exists without replacing a supplied key.
 if [ -z "${API_SERVER_KEY:-}" ] && ! grep -q '^API_SERVER_KEY=..*' "$HERMES_HOME/.env"; then
   key="$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
-  printf 'API_SERVER_KEY=%s\n' "$key" >> "$HERMES_HOME/.env"
+  as_hermes sh -c "printf 'API_SERVER_KEY=%s\\n' '$key' >> '$HERMES_HOME/.env'"
 fi
 
 # Run the existing root bootstrap hook; it drops individual writes to hermes.
