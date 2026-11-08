@@ -30,6 +30,8 @@ class HermesConfigMergeTests(unittest.TestCase):
             self.assertFalse(result["memory"]["write_approval"])
             self.assertEqual(result["display"]["memory_notifications"], "verbose")
             self.assertTrue(result["nous"]["guest"])
+            self.assertTrue(result["web"]["keyless_fallback"])
+            self.assertTrue(result["web"]["keyless_rescue"])
             self.assertEqual(result["agent"]["tool_use_enforcement"], "auto")
 
 
