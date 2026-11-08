@@ -76,6 +76,8 @@ class BackupS3RoundTripTests(unittest.TestCase):
             state = home / "state.db"
             state.write_text("existing-live-state")
             previous = os.environ.get("HERMES_HOME")
+            previous_pass = os.environ.get("HERMES_BACKUP_ENCRYPTION_PASSPHRASE")
+            os.environ["HERMES_BACKUP_ENCRYPTION_PASSPHRASE"] = "test-only-random-passphrase-at-least-32-bytes"
             os.environ["HERMES_HOME"] = str(home)
             try:
                 with patch.object(backup, "client", side_effect=AssertionError(
@@ -88,6 +90,10 @@ class BackupS3RoundTripTests(unittest.TestCase):
                     os.environ.pop("HERMES_HOME", None)
                 else:
                     os.environ["HERMES_HOME"] = previous
+                if previous_pass is None:
+                    os.environ.pop("HERMES_BACKUP_ENCRYPTION_PASSPHRASE", None)
+                else:
+                    os.environ["HERMES_BACKUP_ENCRYPTION_PASSPHRASE"] = previous_pass
 
     def test_empty_profile_without_remote_snapshot_starts_safely(self):
         with tempfile.TemporaryDirectory() as td:
