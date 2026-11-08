@@ -10,6 +10,10 @@ The existing Streamlit/Groq prototype on `main` is intentionally untouched. All 
 - No API keys, Telegram tokens, or user secrets are stored in this repository.
 - This branch is not deployed or production-tested yet.
 
+## Hostless resource type
+
+Deploy Hermes as a **standalone Worker**, not an App: Telegram polling is a long-running background process and does not need to receive HTTP traffic. Hostless Apps must listen on the assigned PORT and pass an HTTP/TCP health check; Workers are specifically intended for long-running processes without HTTP traffic. Keep one replica. The user selected the Docker runtime (Other) with the repository-root Dockerfile and no custom start command, so the image's gateway CMD remains in effect.
+
 ## Hosting decision: no card, always-on, persistent memory
 
 Hostless currently advertises a no-card free allowance and always-on apps/workers. Its public pricing page describes a shared allowance of 0.5 vCPU, 1 GiB RAM and 512 MiB storage. However, its filesystem documentation says that `/root`, `/tmp` and cache files are deleted on restart; only an attached volume persists. Hostless documents durable volumes as separately billed and requiring payment eligibility. Therefore, do **not** assume that a no-card Hostless deployment will preserve Hermes sessions, memories, and skills across restarts.
