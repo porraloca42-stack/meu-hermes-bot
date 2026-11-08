@@ -65,7 +65,7 @@ The profile merger keeps Hermes' built-in Nous guest route enabled (`nous.guest:
 - Tampered ciphertext is rejected.
 - Encrypted backup/upload/download/restore logic passed against a simulated S3 service using mocked Hermes CLI calls.
 - Configuration merge test passed and confirmed existing user settings are preserved.
-- Full custom Docker build and smoke tests passed (run 42531501471), including an actual Hermes CLI backup/import round-trip, wrapper syntax checks, and profile-seed/config merge into `/app/.cache/hermes-home`.
+- Full custom Docker build and smoke tests passed (run 42532138686), including an actual Hermes CLI backup/import round-trip, wrapper syntax checks, and profile-seed/config merge into `/app/.cache/hermes-home`.
 - Seven Python tests passed (run 42532049364), covering AES-GCM round-trip, tamper rejection, mocked S3 backup/restore, empty-profile behavior, protection of existing state, config-merge preservation, and fresh-profile Groq model configuration.
 
 ### Still required
