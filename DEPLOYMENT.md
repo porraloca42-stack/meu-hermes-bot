@@ -104,3 +104,30 @@ The dashboard's API Keys flow provides the S3 access-key ID and secret access ke
 ### Current hard stop
 
 The repository currently has the official-image Dockerfile with `CMD ["gateway", "run"]`, but **does not yet contain** the pre-start restore hook or a supervised backup service. The Hostless resource has not been created. Do not click Deploy/Publish for the real agent yet. Do not claim persistence is working until the above tests pass.
+
+
+## DBByte persistence wrapper added — validation pending
+
+The current branch now includes an initial DBByte backup/restore implementation in the custom Docker image:
+
+- The image keeps the official Hermes ENTRYPOINT and CMD; no custom entrypoint bypasses s6.
+- A boot hook named `01a-dbbyte-restore` runs after the upstream setup hook and before profile reconciliation.
+- An s6 longrun service creates an encrypted full Hermes backup after a 10-minute startup delay and repeats every 24 hours.
+- AES-256-GCM encryption uses a passphrase supplied only through Hostless Secrets. The passphrase must be at least 32 UTF-8 bytes.
+- S3 objects are split into 90 MiB parts to stay below DBByte's documented 100 MB per-object limit. A manifest is written last; part sizes and SHA-256 digests are checked before publishing it.
+- Seven complete snapshots are retained by default.
+
+Configure these Hostless secrets before deployment:
+
+```text
+DBBYTE_ACCESS_KEY_ID
+DBBYTE_SECRET_ACCESS_KEY
+HERMES_BACKUP_ENCRYPTION_PASSPHRASE
+HERMES_BACKUP_BUCKET=hermes-backups
+DBBYTE_ENDPOINT=https://s3.dbbyte.com
+DBBYTE_REGION=auto
+```
+
+Do not paste any secret into chat or GitHub. Generate a unique random passphrase of at least 32 bytes and keep a recovery copy in a password manager. Rotate the DBByte credential pair previously exposed in chat; do not reuse it. Confirm the bucket is Private.
+
+**Not yet approved for deployment:** the Docker image has not been built, the DBByte S3 round-trip has not been tested, and an actual Hermes backup/import cycle has not been tested. The local AES-GCM algorithm passed a round-trip and tamper-detection check, but that is only a unit-level check. The first successful remote backup occurs about 10 minutes after startup; later backups run every 24 hours, so recovery can lose up to about one day of recent changes. Do not deploy the real bot until the container build, upload, download, restore, and restart acceptance tests pass.
