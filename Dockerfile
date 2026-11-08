@@ -7,13 +7,18 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY scripts/dbbyte_backup.py /opt/hermes/scripts/dbbyte_backup.py
+COPY SOUL.md /opt/hermes/docker/SOUL.md
+COPY AGENTS.md /opt/hermes/profile-seed/AGENTS.md
+COPY .hermes/skills/ /opt/hermes/profile-seed/skills/
+COPY docker/cont-init.d/01b-install-profile /etc/cont-init.d/01b-install-profile
 COPY docker/cont-init.d/01a-dbbyte-restore /etc/cont-init.d/01a-dbbyte-restore
 COPY docker/s6-rc.d/hermes-backup/type /etc/s6-overlay/s6-rc.d/hermes-backup/type
 COPY docker/s6-rc.d/hermes-backup/run /etc/s6-overlay/s6-rc.d/hermes-backup/run
 COPY docker/s6-rc.d/hermes-backup/dependencies.d/base /etc/s6-overlay/s6-rc.d/hermes-backup/dependencies.d/base
 COPY docker/s6-rc.d/user/contents.d/hermes-backup /etc/s6-overlay/s6-rc.d/user/contents.d/hermes-backup
 
-RUN chmod 0755 /opt/hermes/scripts/dbbyte_backup.py /etc/cont-init.d/01a-dbbyte-restore /etc/s6-overlay/s6-rc.d/hermes-backup/run
+RUN chmod 0755 /opt/hermes/scripts/dbbyte_backup.py /etc/cont-init.d/01a-dbbyte-restore /etc/cont-init.d/01b-install-profile /etc/s6-overlay/s6-rc.d/hermes-backup/run
 
 # Preserve upstream ENTRYPOINT and gateway command.
+WORKDIR /opt/data
 CMD ["gateway", "run"]
