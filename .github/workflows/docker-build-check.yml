@@ -37,15 +37,14 @@ jobs:
           push: false
           load: true
           tags: hermes-agent:ci-check
-      - name: Smoke-test Hermes CLI and backup dependencies
+      - name: Smoke-test Hermes CLI, backup dependencies and Hostless entrypoint
         run: |
           docker run --rm --entrypoint /bin/sh hermes-agent:ci-check -ec '
             python3 -c "import boto3, cryptography"
             /usr/bin/python3 -c "import yaml"
             /usr/bin/python3 -m py_compile /opt/hermes/scripts/merge_hermes_config.py
-            sh -n /opt/hermes/docker/main-wrapper.sh
+            sh -n /opt/hermes/docker/hostless-entrypoint.sh
             sh -n /opt/hermes/bin/hermes
-            sh -n /etc/s6-overlay/s6-rc.d/dashboard/run
             grep -q "HERMES_HOME" /etc/profile.d/hermes.sh
             test -f /opt/hermes/profile-seed/skills/tiktok-research/SKILL.md
             command -v hermes
@@ -63,12 +62,9 @@ jobs:
             HERMES_HOME="$tmpdir/restore" HOME="$tmpdir/restore" hermes import "$tmpdir/hermes-test.zip" --force
             cmp "$tmpdir/source/SOUL.md" "$tmpdir/restore/SOUL.md"
             rm -rf "$tmpdir"
-            test -x /etc/cont-init.d/01a-dbbyte-restore
-            test -x /etc/cont-init.d/01b-install-profile
             test -f /opt/hermes/profile-seed/AGENTS.md
             test -f /opt/hermes/profile-seed/skills/tiktok-research/SKILL.md
             test -f /opt/hermes/docker/SOUL.md
-            sh -n /etc/cont-init.d/01b-install-profile
             PATH="/command:$PATH" sh /etc/cont-init.d/01b-install-profile
             test -f /app/.cache/hermes-home/AGENTS.md
             test -f /app/.cache/hermes-home/skills/tiktok-research/SKILL.md
@@ -76,6 +72,4 @@ jobs:
             grep -q "provider: custom:groq" /app/.cache/hermes-home/config.yaml
             grep -q "default: openai/gpt-oss-120b" /app/.cache/hermes-home/config.yaml
             grep -q "key_env: GROQ_API_KEY" /app/.cache/hermes-home/config.yaml
-            test -x /etc/s6-overlay/s6-rc.d/hermes-backup/run
-            test -f /etc/s6-overlay/s6-rc.d/user/contents.d/hermes-backup
           '
