@@ -3,9 +3,13 @@
 set -eu
 export HERMES_HOME=/opt/data
 export HOME=/opt/data
-if [ -z "$DBBYTE_ACCESS_KEY_ID" ] || [ -z "$DBBYTE_SECRET_ACCESS_KEY" ]; then
-    echo "[dbbyte-restore] DBByte S3 credentials missing; skipping remote restore"
-    exit 0
+if [ -z "$(printenv DBBYTE_ACCESS_KEY_ID 2>/dev/null || true)" ] || [ -z "$(printenv DBBYTE_SECRET_ACCESS_KEY 2>/dev/null || true)" ]; then
+    echo "[dbbyte-restore] FATAL: DBByte S3 credentials are required; refusing to start without restore capability" >&2
+    exit 1
+fi
+if [ -z "$(printenv HERMES_BACKUP_ENCRYPTION_PASSPHRASE 2>/dev/null || true)" ]; then
+    echo "[dbbyte-restore] FATAL: backup encryption passphrase is required; refusing to start" >&2
+    exit 1
 fi
 cd /opt/data
 exec s6-setuidgid hermes /usr/bin/python3 /opt/hermes/scripts/dbbyte_backup.py restore
