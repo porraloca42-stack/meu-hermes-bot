@@ -27,4 +27,16 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
+          load: true
           tags: hermes-agent:ci-check
+      - name: Smoke-test Hermes CLI and backup dependencies
+        run: |
+          docker run --rm --entrypoint /bin/sh hermes-agent:ci-check -ec '
+            python3 -c "import boto3, cryptography"
+            command -v hermes
+            hermes backup --help >/dev/null
+            hermes import --help >/dev/null
+            test -x /etc/cont-init.d/01a-dbbyte-restore
+            test -x /etc/s6-overlay/s6-rc.d/hermes-backup/run
+            test -f /etc/s6-overlay/s6-rc.d/user/contents.d/hermes-backup
+          '
