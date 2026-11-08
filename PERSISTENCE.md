@@ -8,7 +8,7 @@ The user selected the Docker runtime (Hostless UI label: `Other`), repository-ro
 
 ## Why backup/restore is required
 
-The official Hermes Docker image defaults to `/opt/data`, but Hostless makes the root filesystem read-only. For the no-volume Hostless Worker, the custom image overrides `HERMES_HOME`, `HOME`, and `HERMES_WRITE_SAFE_ROOT` to `/app/.cache/hermes-home`. Hostless documents `/app/.cache` as a writable 2 GiB scratch area that is cleared on restart. Hermes' SQLite session history, built-in memory, configuration, credentials, skills, cron jobs, logs, and artifacts therefore live there only until a restart; DBByte is the encrypted backup/restore target, not a live-mounted filesystem or SQLite database.
+The official Hermes Docker image defaults to `/opt/data`, but Hostless makes the root filesystem read-only. For the no-volume Hostless Worker, the custom image overrides `HERMES_HOME`, `HOME`, and `HERMES_WRITE_SAFE_ROOT` to `/app/.cache/hermes-home`. Hostless documents `/app/.cache` as a writable 2 GiB scratch area that is cleared on restart. Hermes' SQLite session history, built-in memory, configuration, credentials, skills, cron jobs, logs, and artifacts therefore live there only until a restart; DBByte is the encrypted backup/restore target, not a live-mounted filesystem or SQLite database. The upstream main wrapper, exec shim, optional dashboard runner, and login PATH helper are patched to respect the configured home instead of assuming `/opt/data`.
 
 This is not equivalent to a persistent volume. With the current 24-hour backup interval, a crash can lose changes since the last successful backup.
 
@@ -22,7 +22,7 @@ The custom image extends the official Hermes Docker image and preserves its ENTR
 4. Upstream `015-supervise-perms` and `02-reconcile-profiles` run in their normal order.
 5. The official s6 supervision tree starts the gateway and the custom backup longrun service.
 
-The image sets its working directory to `/app/.cache/hermes-home`, so the project's `AGENTS.md` is available as workspace context. The custom `SOUL.md` is used by the upstream first-boot seed.
+The Docker `WORKDIR` is `/app/.cache` so the Hostless mount exists before process start. The patched upstream main wrapper then enters `$HERMES_HOME` ( `/app/.cache/hermes-home` by default), ensuring the project's `AGENTS.md` is available as workspace context. The exec shim, optional dashboard service, and login PATH helper also honor `HERMES_HOME` instead of hard-coding `/opt/data`. The custom `SOUL.md` is used by the upstream first-boot seed.
 
 ## Backup implementation
 
