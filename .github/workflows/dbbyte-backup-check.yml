@@ -6,6 +6,7 @@ on:
     paths:
       - "scripts/dbbyte_backup.py"
       - "tests/test_dbbyte_backup_crypto.py"
+      - "tests/test_dbbyte_backup_s3.py"
       - ".github/workflows/dbbyte-backup-check.yml"
   pull_request:
     paths:
