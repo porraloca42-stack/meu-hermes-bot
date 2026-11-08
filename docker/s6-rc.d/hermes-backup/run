@@ -1,0 +1,5 @@
+#!/command/with-contenv sh
+export HERMES_HOME=/opt/data
+export HOME=/opt/data
+cd /opt/data
+exec s6-setuidgid hermes /usr/bin/python3 /opt/hermes/scripts/dbbyte_backup.py loop
