@@ -41,7 +41,7 @@ jobs:
             hermes import --help >/dev/null
             tmpdir="$(mktemp -d)"
             mkdir -p "$tmpdir/source" "$tmpdir/restore"
-            printf 'hermes-backup-fixture' > "$tmpdir/source/SOUL.md"
+            printf "hermes-backup-fixture" > "$tmpdir/source/SOUL.md"
             HERMES_HOME="$tmpdir/source" HOME="$tmpdir/source" hermes backup -o "$tmpdir/hermes-test.zip"
             test -s "$tmpdir/hermes-test.zip"
             HERMES_HOME="$tmpdir/restore" HOME="$tmpdir/restore" hermes import "$tmpdir/hermes-test.zip" --force
