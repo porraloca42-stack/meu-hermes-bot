@@ -53,6 +53,11 @@ jobs:
             test -f /opt/hermes/profile-seed/skills/tiktok-research/SKILL.md
             test -f /opt/hermes/docker/SOUL.md
             sh -n /etc/cont-init.d/01b-install-profile
+            /etc/cont-init.d/01b-install-profile
+            test -f /opt/data/AGENTS.md
+            test -f /opt/data/SOUL.md
+            test -f /opt/data/skills/tiktok-research/SKILL.md
+            /usr/bin/python3 -c "import yaml; c=yaml.safe_load(open(\"/opt/data/config.yaml\")); assert c[\"memory\"][\"memory_enabled\"] and c[\"nous\"][\"guest\"]"
             test -x /etc/s6-overlay/s6-rc.d/hermes-backup/run
             test -f /etc/s6-overlay/s6-rc.d/user/contents.d/hermes-backup
           '
