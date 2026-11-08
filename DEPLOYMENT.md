@@ -110,7 +110,7 @@ The repository currently has the official-image Dockerfile with `CMD ["gateway",
 
 The current branch now includes an initial DBByte backup/restore implementation in the custom Docker image:
 
-- The image keeps the official Hermes ENTRYPOINT and CMD; no custom entrypoint bypasses s6.
+- The image keeps the official Hermes ENTRYPOINT and CMD; no custom entrypoint bypasses s6. GitHub Actions confirmed the image builds and the Hermes CLI plus backup dependencies are present.
 - A boot hook named `01a-dbbyte-restore` runs after the upstream setup hook and before profile reconciliation.
 - An s6 longrun service creates an encrypted full Hermes backup after a 10-minute startup delay and repeats every 24 hours.
 - AES-256-GCM encryption uses a passphrase supplied only through Hostless Secrets. The passphrase must be at least 32 UTF-8 bytes.
@@ -130,4 +130,4 @@ DBBYTE_REGION=auto
 
 Do not paste any secret into chat or GitHub. Generate a unique random passphrase of at least 32 bytes and keep a recovery copy in a password manager. Rotate the DBByte credential pair previously exposed in chat; do not reuse it. Confirm the bucket is Private.
 
-**Not yet approved for deployment:** the Docker image has not been built, the DBByte S3 round-trip has not been tested, and an actual Hermes backup/import cycle has not been tested. GitHub Actions passed Python compilation plus AES-GCM round-trip and tamper-detection tests (run 42529111417); these are unit-level checks only. The first successful remote backup occurs about 10 minutes after startup; later backups run every 24 hours, so recovery can lose up to about one day of recent changes. Do not deploy the real bot until the container build, upload, download, restore, and restart acceptance tests pass.
+**Not yet approved for deployment:** the custom Docker image build and CLI/dependency smoke tests passed (run 42529730312), and AES-GCM round-trip/tamper-detection unit tests passed (run 42529111417). The DBByte S3 round-trip, actual Hermes backup/import cycle, and restart persistence have not been tested. These are still required before deployment. The first remote backup is scheduled about 10 minutes after startup; later backups run every 24 hours, so recovery can lose up to about one day of recent changes. This schedule has not yet been exercised against DBByte. Do not deploy the real bot until the container build, upload, download, restore, and restart acceptance tests pass.
