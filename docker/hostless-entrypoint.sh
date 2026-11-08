@@ -14,20 +14,30 @@ echo "[hostless-start] preparing writable Hermes home at $HERMES_HOME"
 # by that runtime UID; do not chown or attempt s6-setuidgid (both need extra caps).
 mkdir -p "$HERMES_HOME"
 
-# Require remote persistence before starting on ephemeral storage.
-if [ -z "${DBBYTE_ACCESS_KEY_ID:-}" ] || [ -z "${DBBYTE_SECRET_ACCESS_KEY:-}" ] || [ -z "${HERMES_BACKUP_ENCRYPTION_PASSPHRASE:-}" ]; then
-  echo "[hostless-start] ERROR: DBByte credentials/passphrase are missing; refusing ephemeral startup" >&2
-  exit 1
-fi
+# Remote persistence is optional for boot, but required for durable memory.
+# Missing variables must not prevent the Telegram gateway from starting.
+PERSISTENCE_READY=1
+for name in DBBYTE_ACCESS_KEY_ID DBBYTE_SECRET_ACCESS_KEY HERMES_BACKUP_ENCRYPTION_PASSPHRASE DBBYTE_ENDPOINT DBBYTE_REGION HERMES_BACKUP_BUCKET; do
+  eval 'value=${'"$name"'-}'
+  if [ -z "$value" ]; then
+    echo "[hostless-start] WARNING: $name is missing; DBByte restore/backup will be skipped"
+    PERSISTENCE_READY=0
+  fi
+done
 
-# Prepare the standard writable layout, then restore before seeding defaults.
+# Prepare the standard writable layout.
 mkdir -p \
   "$HERMES_HOME/backups" "$HERMES_HOME/cron" "$HERMES_HOME/sessions" \
   "$HERMES_HOME/logs/gateways" "$HERMES_HOME/hooks" "$HERMES_HOME/memories" \
   "$HERMES_HOME/skills" "$HERMES_HOME/skins" "$HERMES_HOME/plans" \
   "$HERMES_HOME/workspace" "$HERMES_HOME/home" "$HERMES_HOME/pairing" \
   "$HERMES_HOME/platforms/pairing"
-/usr/bin/python3 /opt/hermes/scripts/dbbyte_backup.py restore
+
+if [ "$PERSISTENCE_READY" -eq 1 ]; then
+  /usr/bin/python3 /opt/hermes/scripts/dbbyte_backup.py restore
+else
+  echo "[hostless-start] continuing without remote persistence; data may be lost on restart"
+fi
 
 # Seed upstream defaults only when absent; restored/user files always win.
 if [ ! -f "$HERMES_HOME/config.yaml" ] && [ -f /opt/hermes/cli-config.yaml.example ]; then
@@ -51,9 +61,11 @@ if [ -f /opt/hermes/tools/skills_sync.py ]; then
   /opt/hermes/.venv/bin/python /opt/hermes/tools/skills_sync.py || echo "[hostless-start] WARNING: bundled skill sync failed; continuing"
 fi
 
-# Keep encrypted backup running alongside the gateway.
-/usr/bin/python3 /opt/hermes/scripts/dbbyte_backup.py loop &
-echo "[hostless-start] encrypted DBByte backup loop started"
+# Keep encrypted backup running alongside the gateway when configured.
+if [ "$PERSISTENCE_READY" -eq 1 ]; then
+  /usr/bin/python3 /opt/hermes/scripts/dbbyte_backup.py loop &
+  echo "[hostless-start] encrypted DBByte backup loop started"
+fi
 echo "[hostless-start] starting Hermes gateway"
 if [ "$#" -eq 0 ]; then set -- gateway run; fi
 exec /opt/hermes/bin/hermes "$@"
