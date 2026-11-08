@@ -91,20 +91,18 @@ The user reports creating a DBByte bucket intended to be named `hermes-backups`.
 
 The dashboard's API Keys flow provides the S3 access-key ID and secret access key as a pair. Both values were exposed in chat and must be rotated before use. Never put either value in this repository, logs, Telegram, or a command pasted into chat. Enter replacements directly in Hostless Secrets only.
 
-### Required implementation before deployment
+### Remaining validation before deployment
 
-1. Add a pre-start restore hook that downloads the latest authenticated-encrypted backup into an empty `/opt/data` before the official image's `/init` / s6 supervision tree starts.
-2. Preserve the official image's s6 supervision. The upstream Docker guide states that `gateway run` is managed by s6; replacing the image entrypoint or bypassing `/init` would discard that supervision.
-3. Add a separately supervised periodic backup service (not an unsupervised background shell job). Use the official `hermes backup -o <path>` command, require exit code 0, encrypt with authenticated encryption, upload to the private DBByte bucket, verify the uploaded object, and only then apply retention.
-4. Keep the encryption/decryption key in Hostless Secrets only. Hermes backup ZIPs include sensitive config and credentials; never upload them unencrypted.
-5. Verify S3 upload/download/delete against a disposable test object, then verify encrypted backup/restore using a disposable Hermes profile before deploying the user's real profile.
-6. Confirm DBByte free-plan quotas and behavior at limits in the dashboard. Do not add a payment method or enable paid usage.
-7. Configure a dedicated Telegram bot token and allowed-user restriction only after the storage tests pass.
+The restore-before-start hook and supervised backup service have now been added to the custom image. The remaining work is verification, not implementation from scratch:
 
-### Current hard stop
+1. Confirm the upstream initialization order and that the restore hook runs before profile reconciliation and before the gateway starts.
+2. Verify S3 upload/download/delete against a disposable test object using newly rotated credentials stored only in Hostless Secrets.
+3. Verify encrypted backup/restore using a disposable Hermes profile and the real Hermes CLI, not mocked subprocess calls.
+4. Restart the container and confirm sessions, memories, skills, and configuration are recovered.
+5. Confirm DBByte free-plan quotas and behavior at limits in the dashboard. Do not add a payment method or enable paid usage.
+6. Configure a dedicated Telegram bot token and allowed-user restriction only after the storage tests pass.
 
-The repository currently has the official-image Dockerfile with `CMD ["gateway", "run"]`, but **does not yet contain** the pre-start restore hook or a supervised backup service. The Hostless resource has not been created. Do not click Deploy/Publish for the real agent yet. Do not claim persistence is working until the above tests pass.
-
+Do not deploy the production Telegram bot until the actual DBByte, Hermes restore, and restart acceptance tests pass.
 
 ## DBByte persistence wrapper added — validation pending
 
