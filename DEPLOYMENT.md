@@ -55,6 +55,12 @@ docker compose logs -f hermes
 
 The volume `./hermes-data:/opt/data` must be durable and backed up. Do not use an ephemeral filesystem for the live Hermes profile.
 
+## No-card inference bootstrap
+
+The profile merger preserves the user's settings and enables Hermes' built-in Nous guest inference route (nous.guest: true). On a fresh install with no other provider credentials, Hermes can create its anonymous free-tier identity and use the single nous/welcome model without a card or API key. This is a limited bootstrap, not unlimited frontier inference: the free tier has standard rate limits, one model, and does not include paid Tool Gateway services such as hosted web search, image generation, TTS, or cloud browser. If the free endpoint is closed or rate-limited, the agent must report that accurately rather than silently using a paid provider.
+
+The Groq key is intentionally not selected as the default model provider. Groq's free-tier token-per-minute allowance is below the default Hermes agent request size with its full toolset, so it is not a reliable primary provider for this agent without a paid plan. The key can remain unused; do not upgrade or enable billing.
+
 ## Quality and safety configuration
 
 - Memory writes are enabled to support ongoing learning.
