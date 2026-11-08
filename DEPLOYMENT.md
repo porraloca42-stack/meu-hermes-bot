@@ -1,141 +1,116 @@
 # Hermes Agent — deployment and validation plan
 
-The existing Streamlit/Groq prototype on `main` is intentionally untouched. All Hermes work is isolated on `hermes-agent-migration`.
+All Hermes work is isolated on `hermes-agent-migration`. The `main` branch remains untouched.
 
-## Current build status
+## Hostless resource
 
-- Official Hermes Docker image and gateway command documented by Nous Research.
-- A project operating charter (`AGENTS.md`), global persona template (`SOUL.md`), conservative config example, and five initial TikTok skills are included in this branch.
-- `install-hermes-profile.sh` copies the persona/config/skills into a Hermes home directory without overwriting existing files.
-- No API keys, Telegram tokens, or user secrets are stored in this repository.
-- This branch is not deployed or production-tested yet.
+Deploy as a **standalone Worker**, not an App. Telegram uses long polling and does not serve HTTP traffic; Hostless Workers are intended for long-running background processes.
 
-## Hostless resource type
+The user has selected:
+- Runtime: `Other` / Docker
+- Repository-root Dockerfile: `Dockerfile`
+- Working directory: `/`
+- Start command: blank (preserves the image's `gateway run` CMD)
+- Replicas: 1
+- CPU: 0.5 vCPU
+- Memory: 1,024 MB
+- Storage: No volume
+- Review estimate: R$0.00
 
-Deploy Hermes as a **standalone Worker**, not an App: Telegram polling is a long-running background process and does not need to receive HTTP traffic. Hostless Apps must listen on the assigned PORT and pass an HTTP/TCP health check; Workers are specifically intended for long-running processes without HTTP traffic. Keep one replica. The user selected the Docker runtime (Other) with the repository-root Dockerfile and no custom start command, so the image's gateway CMD remains in effect.
+This uses the documented free allowance if no other resources consume the account-wide pool. Do not add a payment method, increase capacity, create a paid volume, or accept charges. The Worker has not been created or deployed; the user is paused at the final review screen.
 
-## Hosting decision: no card, always-on, persistent memory
+## Hostless filesystem compatibility
 
-Hostless currently advertises a no-card free allowance and always-on apps/workers. Its public pricing page describes a shared allowance of 0.5 vCPU, 1 GiB RAM and 512 MiB storage. However, its filesystem documentation says that `/root`, `/tmp` and cache files are deleted on restart; only an attached volume persists. Hostless documents durable volumes as separately billed and requiring payment eligibility. Therefore, do **not** assume that a no-card Hostless deployment will preserve Hermes sessions, memories, and skills across restarts.
+Hostless runs workloads with a read-only root filesystem. Without an attached volume, the official Hermes default `/opt/data` is not a safe writable path. The custom image therefore overrides:
 
-Hostless also offers a one-click Hermes service, but its provider-key guide documents OpenRouter, OpenAI, or Anthropic keys. OpenAI and Anthropic API use is paid; OpenRouter has some free models but their availability and limits are not guaranteed. Before creating a resource, inspect its storage, runtime, and billing screens. Do not add a card, create a paid volume, enable paid capacity, or accept a paid model.
+- `HERMES_HOME=/app/.cache/hermes-home`
+- `HOME=/app/.cache/hermes-home`
+- `HERMES_WRITE_SAFE_ROOT=/app/.cache/hermes-home`
+- Working directory: `/app/.cache/hermes-home`
 
-Official references:
-- Hermes Docker: https://hermes-agent.nousresearch.com/docs/user-guide/docker
-- Hostless free tier/pricing: https://hostless.cloud/pricing
-- Hostless filesystem: https://docs.hostless.cloud/app/filesystem
-- Hostless storage settings: https://docs.hostless.cloud/app/configurations
-- Hostless Hermes provider keys: https://docs.hostless.cloud/services/provider-keys
+Hostless documents `/app/.cache` as writable scratch storage (2 GiB) and deletes it on restart. This is intentionally ephemeral. The custom image restores the newest encrypted DBByte snapshot before starting Hermes and backs up the full Hermes home every 24 hours. Monitor home size; do not assume this scratch directory is durable.
+
+The image preserves the official Hermes ENTRYPOINT, s6 supervision, and `gateway run` command. Startup order:
+1. Upstream `01-hermes-setup` prepares the configured Hermes home and seeds the custom SOUL.
+2. `01a-dbbyte-restore` restores the latest complete snapshot into an empty home.
+3. `01b-install-profile` adds `AGENTS.md` and TikTok skills only when missing, then merges safe defaults without overwriting user settings.
+4. Upstream supervision-permissions and profile-reconciliation hooks run.
+5. The gateway and encrypted backup longrun service start.
+
+## Hermes project profile
+
+- `SOUL.md`: Brazilian Portuguese, evidence-led strategic partner, direct and practical.
+- `AGENTS.md`: research rigor, source verification, project separation, quality control, and learning loop.
+- `.hermes/skills/`: TikTok research, strategy, script doctor, analytics learning, and source audit.
+- Memory capture is enabled without approval; skill changes require approval initially.
+- The Hostless image seeds these files on first boot and preserves user edits after restore.
+
+The user's current TikTok Shop project (books around law of attraction and quantum physics, including Oráculo 369) is separate from the older `O Sobrevivente Consciente` self-development project. Do not merge the two.
+
+## Free inference bootstrap
+
+The profile merger keeps Hermes' built-in Nous guest route enabled (`nous.guest: true`). With no other provider credentials, a fresh installation can create a no-sign-in free-tier identity and use the single `nous/welcome` model. It has standard rate limits and is not unlimited frontier inference. Paid Tool Gateway features such as hosted web search, image generation, TTS, and cloud browser are not included in this free tier.
+
+The Groq key is intentionally not selected as the default provider. Groq's free-tier 8,000-token-per-minute limit is below the normal Hermes request size with its default toolset; using it as the main provider would cause failed agent turns unless the account is upgraded. Do not upgrade or enable billing. If the Nous free endpoint is unavailable or rate-limited, Hermes must report that accurately rather than silently switching to a paid provider.
+
+## DBByte backup and restore
+
+DBByte is used as encrypted backup storage, not as a mounted filesystem or live SQLite database.
+
+- `scripts/dbbyte_backup.py` runs the official `hermes backup -o <path>` command and rejects failed or invalid ZIP archives.
+- AES-256-GCM encryption; PBKDF2-HMAC-SHA256 with 600,000 iterations derives the key from a passphrase.
+- Encrypted archive split into 90 MiB S3 objects, below DBByte's documented 100 MB object limit.
+- Each part is recorded with size and SHA-256; restore downloads and checks the actual part hashes, full archive hash, GCM authentication, and ZIP CRC before import.
+- Manifest is published last; seven complete snapshots are retained.
+- First backup is scheduled 60 seconds after startup; subsequent backups every 24 hours. Recovery can lose up to one day of recent changes.
+
+Required Hostless Secrets (enter values directly in Hostless; never send them in chat or GitHub):
+- `DBBYTE_ACCESS_KEY_ID`
+- `DBBYTE_SECRET_ACCESS_KEY`
+- `HERMES_BACKUP_ENCRYPTION_PASSPHRASE` — unique random value, at least 32 UTF-8 bytes; keep a recovery copy in a password manager.
+- `HERMES_BACKUP_BUCKET=hermes-backups`
+- `DBBYTE_ENDPOINT=https://s3.dbbyte.com`
+- `DBBYTE_REGION=auto`
+
+The DBByte bucket already exists according to the user. Confirm it is **Private** before uploading. The S3 credential pair previously pasted into chat must be rotated; never reuse those values.
 
 ## Telegram safety
 
-1. Create a **new, dedicated Telegram bot** for Hermes using @BotFather.
-2. Do not reuse the token of the existing Telegram automation. Telegram polling/webhook ownership can conflict.
-3. Keep the token in the host's secret/environment-variable manager as `TELEGRAM_BOT_TOKEN`.
-4. Restrict access with `TELEGRAM_ALLOWED_USERS` set to the owner's numeric Telegram user ID. Never enable `TELEGRAM_ALLOW_ALL_USERS` for production.
-5. Never paste tokens into chat or commit them to Git.
+Before deployment:
+1. Create a new dedicated bot with @BotFather. Do not reuse the bot already connected to Make.
+2. Add `TELEGRAM_BOT_TOKEN` directly to Hostless Secrets.
+3. Add `TELEGRAM_ALLOWED_USERS` with the owner's numeric Telegram user ID. Do not enable allow-all access.
+4. Never paste tokens into chat or commit them to Git.
 
-## Model selection
+## Validation status
 
-Hermes requires a model with at least 64K context for its agentic workflow. Free inference is not unlimited and model catalog/quotas change. Do not select a model merely because it has a free label: validate context length, tool calling, rate limits, reliability and provider terms first.
+### Passed
+- Six Python tests: AES-GCM round-trip, tamper rejection, mocked S3 backup/restore, empty-profile behavior, protection of existing state, and config-merge preservation (GitHub Actions run 42530752212).
+- Earlier Docker builds and Hermes CLI/dependency smoke tests passed for previous revisions.
 
-The existing Groq key may be evaluated as one candidate, but it is not automatically the best free agent model. The current Hermes provider documentation describes Groq configuration and also warns that free/provider limits may constrain long agentic conversations. Prefer a verified no-cost model/provider before setting a default.
+### In progress / failed earlier attempts corrected
+- The Docker build is being re-run with an actual Hermes CLI backup/import round-trip using a disposable, correctly owned Hermes home.
+- Earlier smoke-test attempts exposed test-fixture issues (missing Hermes config/home ownership); these were corrected in the latest workflow revision. Do not count those failed attempts as product failures or as passed tests.
 
-## Local Docker path (only where durable storage exists)
+### Still required before production
+1. Latest Docker build and actual Hermes backup/import smoke test must pass.
+2. Live DBByte upload/download/restore using newly rotated credentials.
+3. Restart test proving sessions, memories, skills, and configuration are recovered from DBByte.
+4. Dedicated Telegram bot responds only to the allowed user.
+5. TikTok research and content task acceptance tests.
 
-The official Docker image stores Hermes home data at `/opt/data` when mounted as documented:
+A mocked S3 test is not a live DBByte test. A Docker build is not proof of live persistence. Do not deploy the real Telegram bot until all remaining acceptance tests pass.
 
-```bash
-mkdir -p hermes-data
-docker compose run --rm hermes setup
-```
+## Local Docker development
 
-Install this repository's persona/config/skills into the same Hermes home, then configure provider and Telegram secrets securely. Start the gateway:
+For local Docker Compose only, the default Hermes path `/opt/data` remains mounted to `./hermes-data` as a local persistent directory. The Hostless override to `/app/.cache/hermes-home` is for the no-volume Hostless Worker only.
 
-```bash
-docker compose up -d
-docker compose logs -f hermes
-```
+## Official references
 
-The volume `./hermes-data:/opt/data` must be durable and backed up. Do not use an ephemeral filesystem for the live Hermes profile.
-
-## No-card inference bootstrap
-
-The profile merger preserves the user's settings and enables Hermes' built-in Nous guest inference route (nous.guest: true). On a fresh install with no other provider credentials, Hermes can create its anonymous free-tier identity and use the single nous/welcome model without a card or API key. This is a limited bootstrap, not unlimited frontier inference: the free tier has standard rate limits, one model, and does not include paid Tool Gateway services such as hosted web search, image generation, TTS, or cloud browser. If the free endpoint is closed or rate-limited, the agent must report that accurately rather than silently using a paid provider.
-
-The Groq key is intentionally not selected as the default model provider. Groq's free-tier token-per-minute allowance is below the default Hermes agent request size with its full toolset, so it is not a reliable primary provider for this agent without a paid plan. The key can remain unused; do not upgrade or enable billing.
-
-## Quality and safety configuration
-
-- Memory writes are enabled to support ongoing learning.
-- Skill writes require approval initially, so a weak model cannot silently turn a bad guess into a permanent procedure. Review staged changes using `/skills pending`, then approve/reject.
-- Non-interactive tool-loop hard stops remain enabled.
-- Memory update notifications are verbose so the user can see what was learned.
-- Keep the Hermes API/dashboard private unless proper authentication, TLS and access controls are configured.
-
-## Acceptance tests before calling it ready
-
-1. Container starts and `hermes doctor` reports no critical errors.
-2. Telegram bot responds only to the authorized user.
-3. Restart the service and confirm sessions, memory, skills, and configuration remain.
-4. Change the model and confirm Hermes profile data remains.
-5. Verify web research, file reading, terminal/sandbox tools, image/voice tools if available, subagents and scheduled tasks individually.
-6. Run a TikTok research task with source citations and a script task; inspect factual accuracy and tool-use behavior.
-7. Back up and restore the Hermes home successfully.
-
-A successful deploy is not production-ready until these tests pass.
-
-
-## Hostless no-volume status — 2026-11-08
-
-The user selected **No volume** in Hostless and set the application data path to `/opt/data`. This avoids creating a paid volume, but it leaves the container filesystem ephemeral. It is not safe to launch the real Telegram agent until restore-before-start and encrypted off-host backups have been implemented and tested.
-
-### DBByte connection contract
-
-The user reports creating a DBByte bucket intended to be named `hermes-backups`. Confirm in the dashboard that it is private. Official DBByte S3 documentation specifies:
-
-- Endpoint: `https://s3.dbbyte.com`
-- Region: `auto`
-- Path-style addressing: enabled
-- Environment variables: `DBBYTE_ACCESS_KEY_ID`, `DBBYTE_SECRET_ACCESS_KEY`, `HERMES_BACKUP_BUCKET`
-
-The dashboard's API Keys flow provides the S3 access-key ID and secret access key as a pair. Both values were exposed in chat and must be rotated before use. Never put either value in this repository, logs, Telegram, or a command pasted into chat. Enter replacements directly in Hostless Secrets only.
-
-### Remaining validation before deployment
-
-The restore-before-start hook and supervised backup service have now been added to the custom image. The remaining work is verification, not implementation from scratch:
-
-1. Confirm the upstream initialization order and that the restore hook runs before profile reconciliation and before the gateway starts.
-2. Verify S3 upload/download/delete against a disposable test object using newly rotated credentials stored only in Hostless Secrets.
-3. Verify encrypted backup/restore using a disposable Hermes profile and the real Hermes CLI, not mocked subprocess calls.
-4. Restart the container and confirm sessions, memories, skills, and configuration are recovered.
-5. Confirm DBByte free-plan quotas and behavior at limits in the dashboard. Do not add a payment method or enable paid usage.
-6. Configure a dedicated Telegram bot token and allowed-user restriction only after the storage tests pass.
-
-Do not deploy the production Telegram bot until the actual DBByte, Hermes restore, and restart acceptance tests pass.
-
-## DBByte persistence wrapper added — validation pending
-
-The current branch now includes an initial DBByte backup/restore implementation in the custom Docker image:
-
-- The image keeps the official Hermes ENTRYPOINT and CMD; no custom entrypoint bypasses s6. GitHub Actions confirmed the image builds and the Hermes CLI plus backup dependencies are present.
-- A boot hook named `01a-dbbyte-restore` runs after the upstream setup hook and before profile reconciliation.
-- An s6 longrun service creates an encrypted full Hermes backup after a 1-minute startup delay and repeats every 24 hours.
-- AES-256-GCM encryption uses a passphrase supplied only through Hostless Secrets. The passphrase must be at least 32 UTF-8 bytes.
-- S3 objects are split into 90 MiB parts to stay below DBByte's documented 100 MB per-object limit. A manifest is written last; part sizes and SHA-256 digests are checked before publishing it.
-- Seven complete snapshots are retained by default.
-
-Configure these Hostless secrets before deployment:
-
-```text
-DBBYTE_ACCESS_KEY_ID
-DBBYTE_SECRET_ACCESS_KEY
-HERMES_BACKUP_ENCRYPTION_PASSPHRASE
-HERMES_BACKUP_BUCKET=hermes-backups
-DBBYTE_ENDPOINT=https://s3.dbbyte.com
-DBBYTE_REGION=auto
-```
-
-Do not paste any secret into chat or GitHub. Generate a unique random passphrase of at least 32 bytes and keep a recovery copy in a password manager. Rotate the DBByte credential pair previously exposed in chat; do not reuse it. Confirm the bucket is Private.
-
-**Not yet approved for deployment:** the custom Docker image build and CLI/dependency smoke tests passed (run 42529730312), and AES-GCM round-trip/tamper-detection unit tests passed (run 42529111417). The backup helper's encrypted upload/download/restore flow passed against a simulated S3 service in GitHub Actions run 42530037493 (3 tests). This does not verify DBByte's actual endpoint, credentials, bucket policy, or service behavior. A live DBByte round-trip, actual Hermes backup/import with a disposable profile, and restart persistence are still required before deployment. The first remote backup is scheduled about 1 minute after startup; later backups run every 24 hours, so recovery can lose up to about one day of recent changes. This schedule has not yet been exercised against DBByte. Do not deploy the real bot until the container build, upload, download, restore, and restart acceptance tests pass.
+- Hermes Docker and `/opt/data`: https://hermes-agent.nousresearch.com/docs/user-guide/docker
+- Hermes backup/import CLI: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/cli-commands.md
+- Hermes free tier: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/free-tier.md
+- Hostless workers: https://docs.hostless.cloud/app/workers
+- Hostless filesystem: https://docs.hostless.cloud/app/filesystem
+- Hostless free entitlement: https://docs.hostless.cloud/plans/limits
+- DBByte S3 docs: https://dbbyte.com/docs
