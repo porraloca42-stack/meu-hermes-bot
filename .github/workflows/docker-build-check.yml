@@ -38,6 +38,14 @@ jobs:
             command -v hermes
             hermes backup --help >/dev/null
             hermes import --help >/dev/null
+            tmpdir="$(mktemp -d)"
+            trap 'rm -rf "$tmpdir"' EXIT
+            mkdir -p "$tmpdir/source" "$tmpdir/restore"
+            printf 'hermes-backup-fixture\\n' > "$tmpdir/source/SOUL.md"
+            HERMES_HOME="$tmpdir/source" HOME="$tmpdir/source" hermes backup -o "$tmpdir/hermes-test.zip"
+            test -s "$tmpdir/hermes-test.zip"
+            HERMES_HOME="$tmpdir/restore" HOME="$tmpdir/restore" hermes import "$tmpdir/hermes-test.zip" --force
+            cmp "$tmpdir/source/SOUL.md" "$tmpdir/restore/SOUL.md"
             test -x /etc/cont-init.d/01a-dbbyte-restore
             test -x /etc/cont-init.d/01b-install-profile
             test -f /opt/hermes/profile-seed/AGENTS.md
