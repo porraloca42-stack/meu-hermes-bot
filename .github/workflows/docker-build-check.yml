@@ -8,12 +8,20 @@ on:
       - "docker/**"
       - "scripts/**"
       - ".github/workflows/docker-build-check.yml"
+      - "AGENTS.md"
+      - "SOUL.md"
+      - ".hermes/skills/**"
+      - "hermes-config.yaml.example"
   pull_request:
     paths:
       - "Dockerfile"
       - "docker/**"
       - "scripts/**"
       - ".github/workflows/docker-build-check.yml"
+      - "AGENTS.md"
+      - "SOUL.md"
+      - ".hermes/skills/**"
+      - "hermes-config.yaml.example"
 
 jobs:
   build:
