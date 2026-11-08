@@ -110,6 +110,7 @@ def backup_once():
             s3.delete_objects(Bucket=bucket(),Delete={"Objects":keys[n:n+1000],"Quiet":True})
         log("pruned old snapshot "+oldprefix)
 def restore_latest():
+    required("HERMES_BACKUP_ENCRYPTION_PASSPHRASE")
     home=Path(os.environ.get("HERMES_HOME","/opt/data"))
     state=home/"state.db"
     if state.exists() and state.stat().st_size>0:
