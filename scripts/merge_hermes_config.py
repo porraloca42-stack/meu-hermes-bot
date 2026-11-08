@@ -27,6 +27,7 @@ defaults = {
         "execution_guidance": "auto",
     },
     "display": {"memory_notifications": "verbose"},
+    "nous": {"guest": True},
 }
 for section, values in defaults.items():
     current = config.setdefault(section, {})
