@@ -27,7 +27,16 @@ defaults = {
         "execution_guidance": "auto",
     },
     "display": {"memory_notifications": "verbose"},
-    "nous": {"guest": True},
+    "providers": {
+        "groq": {
+            "api": "https://api.groq.com/openai/v1",
+            "key_env": "GROQ_API_KEY",
+        },
+    },
+    "model": {
+        "provider": "custom:groq",
+        "default": "openai/gpt-oss-120b",
+    },
     "web": {"keyless_fallback": True, "keyless_rescue": True},
 }
 for section, values in defaults.items():
