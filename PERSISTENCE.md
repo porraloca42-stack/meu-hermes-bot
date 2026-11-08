@@ -46,12 +46,13 @@ Required:
 - `HERMES_BACKUP_BUCKET=hermes-backups`
 - `DBBYTE_ENDPOINT=https://s3.dbbyte.com`
 - `DBBYTE_REGION=auto`
+- `GROQ_API_KEY` — existing Groq API key for the free GPT-OSS 120B model.
 - `TELEGRAM_BOT_TOKEN` — token for a new, dedicated Hermes bot, not the bot already used by Make.
 - `TELEGRAM_ALLOWED_USERS` — the owner's numeric Telegram user ID. Do not enable allow-all access.
 
 The DBByte S3 access-key pair previously pasted into chat must be rotated; do not reuse those values. Confirm the bucket is **Private** before uploading anything. The bucket already exists according to the user's report.
 
-Do not add a payment method, create a paid Hostless volume, or enable paid inference. No Groq model key is configured as the default: the published Groq free-tier token-per-minute limit is below the default Hermes agent request size with its full toolset.
+Do not add a payment method, create a paid Hostless volume, or enable paid inference. The default model is Groq `openai/gpt-oss-120b` on the $0 Free Plan, with a published 8,000 tokens/minute and 200,000 tokens/day cap; it may throttle large or frequent agent turns. The key must be added directly in Hostless Secrets.
 
 ## Free inference bootstrap
 
