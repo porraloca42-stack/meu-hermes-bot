@@ -29,6 +29,7 @@ class HermesConfigMergeTests(unittest.TestCase):
             self.assertTrue(result["memory"]["user_profile_enabled"])
             self.assertFalse(result["memory"]["write_approval"])
             self.assertEqual(result["display"]["memory_notifications"], "verbose")
+            self.assertTrue(result["nous"]["guest"])
             self.assertEqual(result["agent"]["tool_use_enforcement"], "auto")
 
 
