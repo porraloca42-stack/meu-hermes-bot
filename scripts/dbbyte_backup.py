@@ -134,7 +134,7 @@ def restore_latest():
         if p.returncode: raise RuntimeError("Hermes import failed; refusing to continue with a partial restore")
     log("restored verified snapshot "+str(m.get("backup_id","unknown")))
 def loop():
-    delay=max(60,int(os.environ.get("HERMES_BACKUP_INITIAL_DELAY_SECONDS","600")))
+    delay=max(60,int(os.environ.get("HERMES_BACKUP_INITIAL_DELAY_SECONDS","60")))
     interval=max(3600,int(os.environ.get("HERMES_BACKUP_INTERVAL_SECONDS","86400")))
     log(f"backup service active; first backup in {delay}s; interval {interval}s")
     time.sleep(delay)
