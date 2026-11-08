@@ -4,7 +4,7 @@ This repository keeps the original prototype on `main` untouched. The active Her
 
 ## What is prepared
 
-- Official Hermes Docker gateway scaffold.
+- Official Hermes Docker gateway scaffold, extended with an initial DBByte encrypted backup/restore implementation (validation pending).
 - Operating charter and agent identity: `AGENTS.md`, `SOUL.md`.
 - Initial skills for research, strategy, script production, analytics learning, and source/claim audits.
 - Conservative Hermes configuration example and a non-destructive profile installer.
@@ -22,4 +22,4 @@ This repository keeps the original prototype on `main` untouched. The active Her
 
 The no-card hosting requirement is still an open engineering constraint: a free always-on process is not sufficient if its filesystem is ephemeral. The selected host must preserve the Hermes home across restarts, including sessions, memories, and skills. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
-This branch is a prepared build, not a deployed or production-tested service.
+This branch is a prepared build, not a deployed or production-tested service. The DBByte backup wrapper still requires a successful image build, rotated S3 credentials, a private bucket, a Hostless encryption secret, and live backup/restore/restart acceptance tests before deployment.
