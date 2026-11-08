@@ -37,6 +37,11 @@ jobs:
             hermes backup --help >/dev/null
             hermes import --help >/dev/null
             test -x /etc/cont-init.d/01a-dbbyte-restore
+            test -x /etc/cont-init.d/01b-install-profile
+            test -f /opt/hermes/profile-seed/AGENTS.md
+            test -f /opt/hermes/profile-seed/skills/tiktok-research/SKILL.md
+            test -f /opt/hermes/docker/SOUL.md
+            sh -n /etc/cont-init.d/01b-install-profile
             test -x /etc/s6-overlay/s6-rc.d/hermes-backup/run
             test -f /etc/s6-overlay/s6-rc.d/user/contents.d/hermes-backup
           '
