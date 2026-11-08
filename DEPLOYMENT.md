@@ -49,7 +49,7 @@ The user's current TikTok Shop project (books around law of attraction and quant
 
 ## Free inference bootstrap
 
-The profile merger keeps Hermes' built-in Nous guest route enabled (`nous.guest: true`). With no other provider credentials, a fresh installation can create a no-sign-in free-tier identity and use the single `nous/welcome` model. It has standard rate limits and is not unlimited frontier inference. Paid Tool Gateway features such as hosted web search, image generation, TTS, and cloud browser are not included in this free tier.
+The profile merger keeps Hermes' built-in Nous guest route enabled (`nous.guest: true`). With no other provider credentials, a fresh installation can create a no-sign-in free-tier identity and use the single `nous/welcome` model. It has standard rate limits and is not unlimited frontier inference. Current Hermes web tooling also provides a keyless free-provider rotation for `web_search`/`web_extract`; a Nous guest identity can use managed `web_search`. These search/extract routes are rate-limited, so the agent must report throttling and uncertainty honestly. Paid image generation, TTS, and hosted cloud-browser services are not included in this free bootstrap.
 
 The Groq key is intentionally not selected as the default provider. Groq's free-tier 8,000-token-per-minute limit is below the normal Hermes request size with its default toolset; using it as the main provider would cause failed agent turns unless the account is upgraded. Do not upgrade or enable billing. If the Nous free endpoint is unavailable or rate-limited, Hermes must report that accurately rather than silently switching to a paid provider.
 
