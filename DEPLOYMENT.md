@@ -80,11 +80,12 @@ Required Hostless Secrets (enter values directly in Hostless; never send them in
 - `DBBYTE_REGION=auto`
 - `GROQ_API_KEY` — existing Groq API key for the free `openai/gpt-oss-120b` inference route.
 
-The DBByte bucket already exists according to the user. Confirm it is **Private** before uploading. The S3 credential pair previously pasted into chat must be rotated; never reuse those values.
+The DBByte bucket already exists according to the user. Confirm it is **Private** before uploading. Create a fresh S3 key pair scoped to this bucket with ListBucket, GetObject, PutObject, and DeleteObject permissions; the exposed pair must not be reused.
 
 ## Telegram safety
 
-Before deployment:
+Before deployment, use the Hostless Advanced settings step to add all environment variables. The standalone Worker creation flow supports environment configuration before the final Create action. Do not click Create until the required values are present.
+
 1. Create a new dedicated bot with @BotFather. Do not reuse the bot already connected to Make.
 2. Add `TELEGRAM_BOT_TOKEN` directly to Hostless Secrets.
 3. Add `TELEGRAM_ALLOWED_USERS` with the owner's numeric Telegram user ID. Do not enable allow-all access.
