@@ -7,15 +7,15 @@ import re
 import telebot
 from groq import Groq
 
-# Interface visual do Streamlit (obrigatória para o servidor grátis)
+# Interface visual obrigatória
 strl.set_page_config(page_title="Hermes Agente", page_icon="🤖")
 strl.title("🤖 Agente Hermes Avançado")
-strl.success("O Hermes está online e pronto no Telegram!")
+strl.success("O Hermes está online de forma estável no Telegram!")
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-# Inicializa as APIs
+# Inicializa os clientes de API
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 groq_client = Groq(api_key=GROQ_API_KEY)
 
@@ -39,7 +39,6 @@ def pesquisar_internet(query: str) -> str:
     except Exception as e:
         return f"Erro ao acessar os dados da internet: {str(e)}"
 
-# Definição da ferramenta de busca para a IA
 FERRAMENTAS = [
     {
         "type": "function",
@@ -57,12 +56,11 @@ FERRAMENTAS = [
     }
 ]
 
-# Comando /start do Telegram
+# Configuração dos comandos do Telegram
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     bot.reply_to(message, "Fala mestre! O Hermes está online, conectado à internet e pronto para criar seus roteiros!")
 
-# Resposta padrão para qualquer mensagem de texto
 @bot.message_handler(func=lambda message: True)
 def responder_hermes(message):
     user_message = message.text
@@ -73,7 +71,6 @@ def responder_hermes(message):
         {"role": "user", "content": user_message}
     ]
     
-    # Chama a API da Groq para processar o Hermes
     response = groq_client.chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=mensagens,
@@ -83,7 +80,6 @@ def responder_hermes(message):
     
     response_message = response.choices.message
     
-    # Se o Hermes quiser pesquisar na internet
     if response_message.tool_calls:
         bot.send_message(message.chat.id, "🔍 Pesquisando dados atualizados na internet...")
         for tool_call in response_message.tool_calls:
@@ -108,10 +104,22 @@ def responder_hermes(message):
 
     bot.reply_to(message, response_message.content)
 
-# Função que mantém o bot rodando em segundo plano sem travar
-def run_bot():
-    bot.infinity_polling(timeout=10, long_polling_timeout=5)
+# O PULO DO GATO: Garante que NENHUM recarregamento do Streamlit duplique o bot
+def iniciar_bot_com_trava():
+    # Procura se já existe uma thread ativa rodando o bot para não criar outra
+    for thread in threading.enumerate():
+        if thread.name == "HermesTelegramThread":
+            return
+            
+    # Remove instâncias antigas presas no Telegram antes de ligar a nova
+    try:
+        bot.remove_webhook()
+    except:
+        pass
+        
+    # Inicia o bot em uma Thread com nome fixo exclusivo
+    nova_thread = threading.Thread(target=lambda: bot.infinity_polling(timeout=10, long_polling_timeout=5), daemon=True)
+    nova_thread.name = "HermesTelegramThread"
+    nova_thread.start()
 
-if "bot_started" not in strl.session_state:
-    strl.session_state["bot_started"] = True
-    threading.Thread(target=run_bot, daemon=True).start()
+iniciar_bot_com_trava()
