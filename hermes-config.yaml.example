@@ -20,4 +20,7 @@ display:
 
 nous:
   guest: true
-\nweb:\n  keyless_fallback: true\n  keyless_rescue: true\n
+
+web:
+  keyless_fallback: true
+  keyless_rescue: true\n
