@@ -42,6 +42,10 @@ jobs:
             tmpdir="$(mktemp -d)"
             mkdir -p "$tmpdir/source" "$tmpdir/restore"
             printf "hermes-backup-fixture" > "$tmpdir/source/SOUL.md"
+            printf "model: {}\\n" > "$tmpdir/source/config.yaml"
+            printf "model: {}\\n" > "$tmpdir/restore/config.yaml"
+            chown -R hermes:hermes "$tmpdir"
+            chmod 0755 "$tmpdir" "$tmpdir/source" "$tmpdir/restore"
             HERMES_HOME="$tmpdir/source" HOME="$tmpdir/source" hermes backup -o "$tmpdir/hermes-test.zip"
             test -s "$tmpdir/hermes-test.zip"
             HERMES_HOME="$tmpdir/restore" HOME="$tmpdir/restore" hermes import "$tmpdir/hermes-test.zip" --force
