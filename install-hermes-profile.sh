@@ -6,6 +6,13 @@ HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 
 mkdir -p "$HERMES_HOME/skills"
 
+if [[ ! -e "$HERMES_HOME/AGENTS.md" ]]; then
+  cp "$REPO_DIR/AGENTS.md" "$HERMES_HOME/AGENTS.md"
+  echo "Installed AGENTS.md"
+else
+  echo "Kept existing AGENTS.md"
+fi
+
 if [[ ! -e "$HERMES_HOME/SOUL.md" ]]; then
   cp "$REPO_DIR/SOUL.md" "$HERMES_HOME/SOUL.md"
   echo "Installed SOUL.md"
