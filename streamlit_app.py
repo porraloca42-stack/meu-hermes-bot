@@ -7,15 +7,16 @@ import re
 import telebot
 from groq import Groq
 
-# Interface visual obrigatória
+# Interface visual obrigatória do Streamlit
 strl.set_page_config(page_title="Hermes Agente", page_icon="🤖")
 strl.title("🤖 Agente Hermes Avançado")
 strl.success("O Hermes está online de forma estável no Telegram!")
 
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+# CORREÇÃO DA LEITURA DE CHAVES INTERNAS DO STREAMLIT
+TELEGRAM_TOKEN = strl.secrets["TELEGRAM_TOKEN"]
+GROQ_API_KEY = strl.secrets["GROQ_API_KEY"]
 
-# Inicializa os clientes de API
+# Inicializa as conexões com as chaves certas
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 groq_client = Groq(api_key=GROQ_API_KEY)
 
@@ -104,20 +105,17 @@ def responder_hermes(message):
 
     bot.reply_to(message, response_message.content)
 
-# O PULO DO GATO: Garante que NENHUM recarregamento do Streamlit duplique o bot
+# Garante que nenhum recarregamento do Streamlit duplique o bot
 def iniciar_bot_com_trava():
-    # Procura se já existe uma thread ativa rodando o bot para não criar outra
     for thread in threading.enumerate():
         if thread.name == "HermesTelegramThread":
             return
             
-    # Remove instâncias antigas presas no Telegram antes de ligar a nova
     try:
         bot.remove_webhook()
     except:
         pass
         
-    # Inicia o bot em uma Thread com nome fixo exclusivo
     nova_thread = threading.Thread(target=lambda: bot.infinity_polling(timeout=10, long_polling_timeout=5), daemon=True)
     nova_thread.name = "HermesTelegramThread"
     nova_thread.start()
