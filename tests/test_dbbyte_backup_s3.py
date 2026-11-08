@@ -70,5 +70,42 @@ class BackupS3RoundTripTests(unittest.TestCase):
             )
 
 
+    def test_restore_does_not_overwrite_existing_state(self):
+        with tempfile.TemporaryDirectory() as td:
+            home = Path(td)
+            state = home / "state.db"
+            state.write_text("existing-live-state")
+            previous = os.environ.get("HERMES_HOME")
+            os.environ["HERMES_HOME"] = str(home)
+            try:
+                with patch.object(backup, "client", side_effect=AssertionError(
+                    "S3 must not be contacted when local state already exists"
+                )):
+                    backup.restore_latest()
+                self.assertEqual(state.read_text(), "existing-live-state")
+            finally:
+                if previous is None:
+                    os.environ.pop("HERMES_HOME", None)
+                else:
+                    os.environ["HERMES_HOME"] = previous
+
+    def test_empty_profile_without_remote_snapshot_starts_safely(self):
+        with tempfile.TemporaryDirectory() as td:
+            home = Path(td)
+            previous = os.environ.get("HERMES_HOME")
+            os.environ["HERMES_HOME"] = str(home)
+            try:
+                fake_s3 = object()
+                with patch.object(backup, "client", return_value=fake_s3), \\
+                     patch.object(backup, "manifests", return_value=[]):
+                    backup.restore_latest()
+                self.assertFalse((home / "state.db").exists())
+            finally:
+                if previous is None:
+                    os.environ.pop("HERMES_HOME", None)
+                else:
+                    os.environ["HERMES_HOME"] = previous
+
+
 if __name__ == "__main__":
     unittest.main()
