@@ -47,11 +47,18 @@ The image preserves the official Hermes ENTRYPOINT, s6 supervision, and `gateway
 
 The user's current TikTok Shop project (books around law of attraction and quantum physics, including Oráculo 369) is separate from the older `O Sobrevivente Consciente` self-development project. Do not merge the two.
 
-## Free inference bootstrap
+## Free inference configuration
 
-The profile merger keeps Hermes' built-in Nous guest route enabled (`nous.guest: true`). With no other provider credentials, a fresh installation can create a no-sign-in free-tier identity and use the single `nous/welcome` model. It has standard rate limits and is not unlimited frontier inference. Current Hermes web tooling also provides a keyless free-provider rotation for `web_search`/`web_extract`; a Nous guest identity can use managed `web_search`. These search/extract routes are rate-limited, so the agent must report throttling and uncertainty honestly. Paid image generation, TTS, and hosted cloud-browser services are not included in this free bootstrap.
+The profile merger configures Groq as the default model provider using the official OpenAI-compatible endpoint:
 
-The Groq key is intentionally not selected as the default provider. Groq's free-tier 8,000-token-per-minute limit is below the normal Hermes request size with its default toolset; using it as the main provider would cause failed agent turns unless the account is upgraded. Do not upgrade or enable billing. If the Nous free endpoint is unavailable or rate-limited, Hermes must report that accurately rather than silently switching to a paid provider.
+- Provider: `custom:groq`
+- API: `https://api.groq.com/openai/v1`
+- Model: `openai/gpt-oss-120b`
+- Secret: `GROQ_API_KEY` (entered directly in Hostless Secrets)
+
+Groq's published Free Plan limits for GPT-OSS 120B are 30 requests/minute, 1,000 requests/day, 8,000 tokens/minute, and 200,000 tokens/day. This is a genuinely $0 API tier but it is rate-limited, not unlimited. A large agent prompt or several tool-heavy turns can hit the token-per-minute ceiling. If that happens, Hermes must wait/report the limit; it must never upgrade or incur charges. The existing Groq API key the user generated can be used if it remains active; never send it in chat.
+
+The Nous `nous.guest` setting does not grant hosted free inference: the no-sign-in inference welcome trial is claimed by a fresh local Desktop installation, not by a cloud Worker. It is therefore not relied on here. Hermes web search/extract has a separate keyless free-provider rotation, subject to provider throttling. Paid image generation, TTS, and hosted cloud-browser services are not included.
 
 ## DBByte backup and restore
 
@@ -71,6 +78,7 @@ Required Hostless Secrets (enter values directly in Hostless; never send them in
 - `HERMES_BACKUP_BUCKET=hermes-backups`
 - `DBBYTE_ENDPOINT=https://s3.dbbyte.com`
 - `DBBYTE_REGION=auto`
+- `GROQ_API_KEY` — existing Groq API key for the free `openai/gpt-oss-120b` inference route.
 
 The DBByte bucket already exists according to the user. Confirm it is **Private** before uploading. The S3 credential pair previously pasted into chat must be rotated; never reuse those values.
 
