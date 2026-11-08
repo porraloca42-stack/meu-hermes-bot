@@ -14,7 +14,7 @@ The official Docker guide identifies `/opt/data` as the single source of truth. 
 
 ## Hermes backup capability (verified)
 
-The official `hermes backup` command creates a ZIP of configuration, skills, sessions, and data. It uses SQLite's backup API, so it can safely snapshot a live WAL-mode database. `hermes import` restores the archive; the gateway should be stopped before import.
+The official `hermes backup -o <path>` command creates a ZIP of configuration, skills, sessions, and data. It uses SQLite's backup API, so it can safely snapshot a live WAL-mode database. `hermes import <zipfile>` restores the archive; the gateway should be stopped before import. Full backups include sensitive credentials such as `.env` and `auth.json`, so an off-host archive must be encrypted before upload and the encryption key must exist only in Hostless secrets. The CLI reports incomplete backups with a non-zero exit status; the wrapper must reject any archive unless the command exits successfully.
 
 This is the preferred mechanism for producing consistent backup archives. It does not itself upload archives off-host or make the live filesystem persistent.
 
@@ -93,6 +93,7 @@ Before implementing a backup wrapper or selecting a provider:
 - No persistent volume is attached.
 - No external object-store account or credentials are configured.
 - No backup automation is implemented or tested.
+- The GitHub repository is public; it currently contains source/configuration examples only. It must never receive real backups or secrets.
 - Do not describe the system as durable or production-ready until all acceptance tests pass.
 
 ## Official references
