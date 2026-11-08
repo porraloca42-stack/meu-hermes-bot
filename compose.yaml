@@ -1,6 +1,7 @@
 services:
   hermes:
-    image: nousresearch/hermes-agent:stable
+    # Official image; no unverified "stable" tag.
+    image: nousresearch/hermes-agent
     container_name: hermes-agent
     restart: unless-stopped
     init: true
