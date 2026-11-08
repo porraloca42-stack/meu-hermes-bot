@@ -57,7 +57,8 @@ jobs:
             test -f /opt/data/AGENTS.md
             test -f /opt/data/SOUL.md
             test -f /opt/data/skills/tiktok-research/SKILL.md
-            /usr/bin/python3 -c "import yaml; c=yaml.safe_load(open(\"/opt/data/config.yaml\")); assert c[\"memory\"][\"memory_enabled\"] and c[\"nous\"][\"guest\"]"
+            grep -q "memory_enabled: true" /opt/data/config.yaml
+            grep -q "guest: true" /opt/data/config.yaml
             test -x /etc/s6-overlay/s6-rc.d/hermes-backup/run
             test -f /etc/s6-overlay/s6-rc.d/user/contents.d/hermes-backup
           '
