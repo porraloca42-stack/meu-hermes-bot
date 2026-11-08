@@ -75,7 +75,7 @@ def check_zip(p):
         bad=z.testzip()
         if bad: raise RuntimeError("ZIP CRC check failed: "+bad)
 def backup_once():
-    s3=client(); home=Path(os.environ.get("HERMES_HOME","/opt/data"))
+    s3=client(); home=Path(os.environ.get("HERMES_HOME","/app/.cache/hermes-home"))
     keep=max(1,int(os.environ.get("HERMES_BACKUP_RETENTION","7")))
     bid=datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")+"-"+uuid.uuid4().hex[:8]
     prefix=PREFIX+bid+"/"
@@ -111,7 +111,7 @@ def backup_once():
         log("pruned old snapshot "+oldprefix)
 def restore_latest():
     required("HERMES_BACKUP_ENCRYPTION_PASSPHRASE")
-    home=Path(os.environ.get("HERMES_HOME","/opt/data"))
+    home=Path(os.environ.get("HERMES_HOME","/app/.cache/hermes-home"))
     state=home/"state.db"
     if state.exists() and state.stat().st_size>0:
         log("state.db already exists; skipping restore to protect existing data"); return
