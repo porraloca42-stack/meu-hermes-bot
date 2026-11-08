@@ -118,7 +118,7 @@ def run_bot():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, responder_hermes))
     
     # Mantém o bot escutando os eventos para sempre
-    application.run_polling(close_loop=False)
+application.run_polling(close_loop=False, close_loop_signum=None)
 
 # Garante a inicialização única do bot em segundo plano
 if "bot_started" not in strl.session_state:
