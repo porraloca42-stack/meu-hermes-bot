@@ -139,7 +139,7 @@ The backup wrapper uses authenticated encryption; wrong passphrases or modified 
 
 **Important limitations / acceptance gates:**
 
-- This is an initial implementation, not yet validated by a successful Docker build or a live DBByte round-trip. The local AES-GCM round-trip and tamper-detection logic was tested separately; this does not validate the container image, S3 permissions, or Hermes import.
+- This is an initial implementation, not yet validated by a successful Docker build or a live DBByte round-trip. GitHub Actions passed Python compilation plus AES-GCM round-trip and tamper-detection unit tests (run 42529111417). This does not validate the container image, S3 permissions, or Hermes import.
 - Backups run every 24 hours after a 10-minute initial delay. Until the first backup completes, there is no off-host recovery point. Expected recovery-point loss can be up to roughly 24 hours after the latest successful backup.
 - The restore hook skips restore when a non-empty `/opt/data/state.db` already exists. On a fresh ephemeral filesystem it restores the newest snapshot before gateway reconciliation.
 - The script requires the DBByte S3 key pair and encryption passphrase. Missing secrets cause startup to fail closed rather than silently launching an empty agent.
