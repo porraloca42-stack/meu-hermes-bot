@@ -67,7 +67,6 @@ async def responder_hermes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         {"role": "user", "content": user_message}
     ]
     
-    # Executa a chamada da API da Groq de forma segura dentro do loop assíncrono do Telegram
     loop = asyncio.get_event_loop()
     response = await loop.run_in_executor(
         None, 
@@ -109,7 +108,6 @@ async def responder_hermes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(response_message.content)
 
 def run_bot():
-    # Cria um loop assíncrono isolado para o bot rodar independente da página do Streamlit
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
@@ -117,8 +115,8 @@ def run_bot():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, responder_hermes))
     
-    # Mantém o bot escutando os eventos para sempre
-application.run_polling(close_loop=False, close_loop_signum=None)
+    # Mantém o bot escutando os eventos sem dar erro de sinal do Linux
+    application.run_polling(close_loop=False, close_loop_signum=None)
 
 # Garante a inicialização única do bot em segundo plano
 if "bot_started" not in strl.session_state:
