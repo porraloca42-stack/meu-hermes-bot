@@ -73,7 +73,9 @@ jobs:
             test -f /app/.cache/hermes-home/AGENTS.md
             test -f /app/.cache/hermes-home/skills/tiktok-research/SKILL.md
             grep -q "memory_enabled: true" /app/.cache/hermes-home/config.yaml
-            grep -q "guest: true" /app/.cache/hermes-home/config.yaml
+            grep -q "provider: custom:groq" /app/.cache/hermes-home/config.yaml
+            grep -q "default: openai/gpt-oss-120b" /app/.cache/hermes-home/config.yaml
+            grep -q "key_env: GROQ_API_KEY" /app/.cache/hermes-home/config.yaml
             test -x /etc/s6-overlay/s6-rc.d/hermes-backup/run
             test -f /etc/s6-overlay/s6-rc.d/user/contents.d/hermes-backup
           '
