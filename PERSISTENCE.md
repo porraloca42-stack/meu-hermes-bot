@@ -65,7 +65,15 @@ The current Tigris pricing page and S3 integration guidance:
 - https://dbbyte.com/docs
 - Secondary alternative: https://www.stored.ge/docs/faq and https://www.stored.ge/legal/terms (5 GB no-card free tier; no contractual SLA yet, so treat as a test-only candidate)
 
-DBByte and Stored are still candidates only. No account, bucket, access key, or backup integration has been created. Do not claim either has been signup-tested by the user.
+DBByte signup has now succeeded for the user via GitHub (user-reported, 2026-11-08). This confirms account creation without a card in this case. No bucket, API key pair, or backup integration has yet been created. Keep Stored as fallback only.
+
+### DBByte integration notes (docs checked 2026-11-08)
+- Create the bucket from Dashboard → New Bucket; name lowercase, 3–63 characters, letters/numbers/hyphens, unique. Choose **Private**, never Public, for Hermes backups.
+- S3 endpoint: `https://s3.dbbyte.com`; region `auto`; `forcePathStyle: true` is required. Use an access key ID and secret access key from Dashboard → API Keys; keep both as Hostless secrets.
+- Current documented S3 operations include PutObject, GetObject, DeleteObject, ListObjectsV2, HeadObject/HeadBucket, and multipart upload. S3 CreateBucket is not available yet, so create bucket in dashboard first. Individual upload limit is 100 MB.
+- API key docs describe separate read/write/delete permissions and bucket-scoped keys for the REST API; do not assume a generic REST API token is interchangeable with S3 access-key credentials. Follow the dashboard's S3 key flow.
+- Free-tier quota details conflict across DBByte pages (5 GB storage is consistent; bandwidth and request quotas differ between docs/pricing/homepage). Before relying on it, inspect the account dashboard's actual quota and verify that limit exhaustion refuses operations rather than automatically charging. Current docs state free-plan limits refuse operations; pricing page language about overage is inconsistent.
+- Account creation is confirmed by user; private bucket, S3 key creation, upload/download, encryption, restore and billing behavior remain untested.
 
 ## Hermes external memory providers
 
