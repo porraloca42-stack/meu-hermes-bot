@@ -1,5 +1,12 @@
 import os
 import streamlit as strl
+
+# Garante a injeção correta das chaves no sistema operacional
+if "TELEGRAM_TOKEN" not in os.environ:
+    os.environ["TELEGRAM_TOKEN"] = strl.secrets["TELEGRAM_TOKEN"]
+if "GROQ_API_KEY" not in os.environ:
+    os.environ["GROQ_API_KEY"] = strl.secrets["GROQ_API_KEY"]
+
 import threading
 import json
 import urllib.request
@@ -7,18 +14,14 @@ import re
 import telebot
 from groq import Groq
 
-# Interface visual obrigatória do Streamlit
+# Interface visual do Streamlit
 strl.set_page_config(page_title="Hermes Agente", page_icon="🤖")
 strl.title("🤖 Agente Hermes Avançado")
-strl.success("O Hermes está online de forma estável no Telegram!")
+strl.success("O Hermes está ativo e rodando de forma estável no Telegram!")
 
-# CORREÇÃO DA LEITURA DE CHAVES INTERNAS DO STREAMLIT
-TELEGRAM_TOKEN = strl.secrets["TELEGRAM_TOKEN"]
-GROQ_API_KEY = strl.secrets["GROQ_API_KEY"]
-
-# Inicializa as conexões com as chaves certas
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
-groq_client = Groq(api_key=GROQ_API_KEY)
+# Inicializa o bot usando a variável de ambiente limpa
+bot = telebot.TeleBot(os.environ["TELEGRAM_TOKEN"])
+groq_client = Groq(api_key=os.environ["GROQ_API_KEY"])
 
 # FUNÇÃO NATIVA DE PESQUISA NA WEB
 def pesquisar_internet(query: str) -> str:
@@ -57,7 +60,7 @@ FERRAMENTAS = [
     }
 ]
 
-# Configuração dos comandos do Telegram
+# Comandos do Telegram
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     bot.reply_to(message, "Fala mestre! O Hermes está online, conectado à internet e pronto para criar seus roteiros!")
@@ -105,18 +108,23 @@ def responder_hermes(message):
 
     bot.reply_to(message, response_message.content)
 
-# Garante que nenhum recarregamento do Streamlit duplique o bot
+# FUNÇÃO QUE RESOLVE O CONFLITO 401 DE SESSÃO
+def rodar_polling_limpo():
+    try:
+        # Força o Telegram a derrubar qualquer outra conexão fantasma aberta com esse token
+        bot.remove_webhook()
+    except:
+        pass
+    
+    # Inicia a escuta de mensagens limpando erros anteriores
+    bot.infinity_polling(timeout=20, long_polling_timeout=10, skip_pending=True)
+
 def iniciar_bot_com_trava():
     for thread in threading.enumerate():
         if thread.name == "HermesTelegramThread":
             return
             
-    try:
-        bot.remove_webhook()
-    except:
-        pass
-        
-    nova_thread = threading.Thread(target=lambda: bot.infinity_polling(timeout=10, long_polling_timeout=5), daemon=True)
+    nova_thread = threading.Thread(target=rodar_polling_limpo, daemon=True)
     nova_thread.name = "HermesTelegramThread"
     nova_thread.start()
 
