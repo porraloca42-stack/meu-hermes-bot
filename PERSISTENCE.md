@@ -64,14 +64,14 @@ The profile merger keeps Hermes' built-in Nous guest route enabled (`nous.guest:
 - Tampered ciphertext is rejected.
 - Encrypted backup/upload/download/restore logic passed against a simulated S3 service using mocked Hermes CLI calls.
 - Configuration merge test passed and confirmed existing user settings are preserved.
-- The actual Hermes CLI backup/import round-trip succeeded in Docker CI run 42531234012: the CLI created a ZIP and restored all four fixture files. The overall job then failed only when the test harness invoked the s6 profile-seed hook outside its normal init context; that harness invocation has been corrected and is being rerun.
+- Full custom Docker build and smoke tests passed (run 42531501471), including an actual Hermes CLI backup/import round-trip, wrapper syntax checks, and profile-seed/config merge into `/app/.cache/hermes-home`.
+- Six Python tests passed (run 42531504083), covering AES-GCM round-trip, tamper rejection, mocked S3 backup/restore, empty-profile behavior, protection of existing state, and config-merge preservation.
 
 ### Still required
-1. Latest full Docker build and smoke tests, including the profile-seed hook running in a suitable s6-like environment. The actual Hermes CLI backup/import portion has already passed.
-2. Live DBByte upload/download/restore with newly rotated credentials and the private bucket.
-3. Restart test confirming sessions, memory, skills, and configuration are recovered.
-4. Telegram bot response restricted to the allowed user.
-5. TikTok research and content task acceptance tests.
+1. Live DBByte upload/download/restore with newly rotated credentials and the private bucket.
+2. Restart test confirming sessions, memory, skills, and configuration are recovered.
+3. Telegram bot response restricted to the allowed user.
+4. TikTok research and content task acceptance tests.
 
 A simulated S3 test is not a live DBByte test. A successful Docker build is not proof of live persistence. Do not call the agent production-ready until all remaining acceptance tests pass.
 
