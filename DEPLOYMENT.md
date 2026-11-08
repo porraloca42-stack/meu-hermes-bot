@@ -86,14 +86,14 @@ Before deployment:
 
 ### Passed
 - Six Python tests: AES-GCM round-trip, tamper rejection, mocked S3 backup/restore, empty-profile behavior, protection of existing state, and config-merge preservation (GitHub Actions run 42530752212).
-- Earlier Docker builds and Hermes CLI/dependency smoke tests passed for previous revisions.
+- The actual Hermes CLI backup/import round-trip succeeded in Docker CI run 42531234012: it created a ZIP and restored all four fixture files. The overall job then failed only at the profile-seed hook invocation in the test harness.
 
 ### In progress / failed earlier attempts corrected
-- The Docker build is being re-run with an actual Hermes CLI backup/import round-trip using a disposable, correctly owned Hermes home.
-- Earlier smoke-test attempts exposed test-fixture issues (missing Hermes config/home ownership); these were corrected in the latest workflow revision. Do not count those failed attempts as product failures or as passed tests.
+- The complete Docker smoke test is being re-run after correcting the harness to invoke the s6 profile-seed hook with the expected command path. The real Hermes backup/import portion has already passed.
+- Earlier smoke-test attempts exposed fixture and test-harness issues; do not count those failed attempts as product failures or as passed full-image tests.
 
 ### Still required before production
-1. Latest Docker build and actual Hermes backup/import smoke test must pass.
+1. Latest full Docker build and profile-seed smoke test must pass. The actual Hermes backup/import CLI round-trip is already verified.
 2. Live DBByte upload/download/restore using newly rotated credentials.
 3. Restart test proving sessions, memories, skills, and configuration are recovered from DBByte.
 4. Dedicated Telegram bot responds only to the allowed user.
