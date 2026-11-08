@@ -28,6 +28,7 @@ defaults = {
     },
     "display": {"memory_notifications": "verbose"},
     "nous": {"guest": True},
+    "web": {"keyless_fallback": True, "keyless_rescue": True},
 }
 for section, values in defaults.items():
     current = config.setdefault(section, {})
