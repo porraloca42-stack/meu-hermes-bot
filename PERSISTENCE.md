@@ -64,10 +64,10 @@ The profile merger keeps Hermes' built-in Nous guest route enabled (`nous.guest:
 - Tampered ciphertext is rejected.
 - Encrypted backup/upload/download/restore logic passed against a simulated S3 service using mocked Hermes CLI calls.
 - Configuration merge test passed and confirmed existing user settings are preserved.
-- Earlier Docker image build and Hermes CLI/dependency smoke tests passed for a prior revision.
+- The actual Hermes CLI backup/import round-trip succeeded in Docker CI run 42531234012: the CLI created a ZIP and restored all four fixture files. The overall job then failed only when the test harness invoked the s6 profile-seed hook outside its normal init context; that harness invocation has been corrected and is being rerun.
 
 ### Still required
-1. Latest Docker build and smoke tests, including an actual Hermes CLI backup/import round-trip using a disposable profile.
+1. Latest full Docker build and smoke tests, including the profile-seed hook running in a suitable s6-like environment. The actual Hermes CLI backup/import portion has already passed.
 2. Live DBByte upload/download/restore with newly rotated credentials and the private bucket.
 3. Restart test confirming sessions, memory, skills, and configuration are recovered.
 4. Telegram bot response restricted to the allowed user.
