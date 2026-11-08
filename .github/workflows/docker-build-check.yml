@@ -1,0 +1,30 @@
+name: Hermes Docker image build check
+
+on:
+  push:
+    branches: [hermes-agent-migration]
+    paths:
+      - "Dockerfile"
+      - "docker/**"
+      - "scripts/**"
+      - ".github/workflows/docker-build-check.yml"
+  pull_request:
+    paths:
+      - "Dockerfile"
+      - "docker/**"
+      - "scripts/**"
+      - ".github/workflows/docker-build-check.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build custom Hermes image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: hermes-agent:ci-check
