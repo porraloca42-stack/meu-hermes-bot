@@ -20,6 +20,13 @@ COPY docker/s6-rc.d/user/contents.d/hermes-backup /etc/s6-overlay/s6-rc.d/user/c
 
 RUN chmod 0755 /opt/hermes/scripts/dbbyte_backup.py /opt/hermes/scripts/merge_hermes_config.py /etc/cont-init.d/01a-dbbyte-restore /etc/cont-init.d/01b-install-profile /etc/s6-overlay/s6-rc.d/hermes-backup/run
 
+# Hostless mounts /app/.cache as a writable, ephemeral 2 GiB path. Hermes state is
+# restored from DBByte before gateway startup; do not write into the read-only root.
+ENV HERMES_HOME=/app/.cache/hermes-home
+ENV HERMES_WRITE_SAFE_ROOT=/app/.cache/hermes-home
+ENV HOME=/app/.cache/hermes-home
+ENV PATH="/app/.cache/hermes-home/.local/bin:${PATH}"
+
 # Preserve upstream ENTRYPOINT and gateway command.
-WORKDIR /opt/data
+WORKDIR /app/.cache/hermes-home
 CMD ["gateway", "run"]
