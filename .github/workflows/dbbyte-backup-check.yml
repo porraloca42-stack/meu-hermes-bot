@@ -22,8 +22,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install test dependencies
-        run: python -m pip install boto3 cryptography
+        run: python -m pip install boto3 cryptography 'moto[s3]'
       - name: Compile helper
         run: python -m py_compile scripts/dbbyte_backup.py
       - name: Test authenticated encryption
-        run: python -m unittest tests/test_dbbyte_backup_crypto.py -v
+        run: python -m unittest tests/test_dbbyte_backup_crypto.py tests/test_dbbyte_backup_s3.py -v
