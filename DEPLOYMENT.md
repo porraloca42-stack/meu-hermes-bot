@@ -85,11 +85,9 @@ Before deployment:
 ## Validation status
 
 ### Passed
-- Six Python tests: AES-GCM round-trip, tamper rejection, mocked S3 backup/restore, empty-profile behavior, protection of existing state, and config-merge preservation (GitHub Actions run 42530752212).
 - Full custom Docker build and smoke tests passed in run 42531501471, including actual Hermes CLI backup/import, wrapper checks, and profile seeding/config merge in the Hostless writable cache path.
 - Six Python tests passed in run 42531504083, including encryption/tamper checks, mocked S3 round-trip, restore safety, and config-merge preservation.
 
-### Remaining live acceptance tests
 ### Still required before production
 1. Live DBByte upload/download/restore using newly rotated credentials.
 2. Restart test proving sessions, memories, skills, and configuration are recovered from DBByte.
