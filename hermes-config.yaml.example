@@ -9,6 +9,7 @@ skills:
 
 agent:
   tool_use_enforcement: "auto"
+  execution_guidance: "auto"
 
 tool_loop_guardrails:
   warnings_enabled: true
@@ -16,3 +17,6 @@ tool_loop_guardrails:
 
 display:
   memory_notifications: "verbose"
+
+nous:
+  guest: true
