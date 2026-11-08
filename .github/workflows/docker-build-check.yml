@@ -35,6 +35,10 @@ jobs:
             python3 -c "import boto3, cryptography"
             /usr/bin/python3 -c "import yaml"
             /usr/bin/python3 -m py_compile /opt/hermes/scripts/merge_hermes_config.py
+            sh -n /opt/hermes/docker/main-wrapper.sh
+            sh -n /opt/hermes/bin/hermes
+            sh -n /etc/s6-overlay/s6-rc.d/dashboard/run
+            grep -q "HERMES_HOME" /etc/profile.d/hermes.sh
             test -f /opt/hermes/profile-seed/skills/tiktok-research/SKILL.md
             command -v hermes
             hermes backup --help >/dev/null
