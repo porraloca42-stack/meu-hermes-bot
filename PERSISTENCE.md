@@ -37,6 +37,32 @@ R2 advertises a free monthly allowance for Standard storage (10 GB-month, 1 mill
 
 R2 is object storage. It is not a POSIX volume and must not be mounted as `/opt/data` or used as a live SQLite database.
 
+
+## Additional object-store candidate: Tigris (promising, not yet activated)
+
+Tigris currently advertises an ongoing monthly free allowance on its pricing page:
+- 5 GB Standard storage.
+- 10,000 Class A requests (PUT/COPY/POST/LIST).
+- 100,000 Class B requests (GET and other requests).
+- No egress fees.
+- No payment card required to start.
+
+The S3-compatible endpoint is `https://t3.storage.dev`; the documented region value is `auto`. Credentials are an access-key ID and secret, and the secret is displayed only once when created.
+
+This is a stronger candidate than R2 for the user's no-card requirement. However:
+- The free allowance is a quota, not proof of a hard spending cap.
+- Public pricing describes metered prices above the allowance. We have not verified whether an account without a payment method is automatically blocked at quota or simply unable to continue.
+- Do not add a payment method, enable paid usage, or create any paid resource.
+- Before using it for Hermes, create a test bucket and verify account billing behavior, access-key scope, upload/download, and deletion while remaining inside free limits.
+- Never store Hermes backups in this public GitHub repository. The repository is currently public; backups may contain Telegram/API credentials and private conversation history. Only source code and sanitized examples belong here.
+
+The current Tigris pricing page and S3 integration guidance:
+- https://www.tigrisdata.com/pricing/
+- https://www.tigrisdata.com/features/
+- https://www.npmjs.com/package/@tigrisdata/cli
+
+Tigris is still only a candidate. No account, bucket, access key, or backup integration has been created.
+
 ## Hermes external memory providers
 
 Current Hermes docs list built-in external memory providers including RetainDB and ByteRover, plus catalog providers such as Honcho, OpenViking, Mem0, Hindsight, Holographic, and Supermemory. The built-in MEMORY.md/USER.md remains active alongside one selected external provider.
