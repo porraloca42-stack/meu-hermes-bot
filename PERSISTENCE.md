@@ -4,7 +4,7 @@
 
 Use a **standalone Hostless Worker**, not an App. Telegram polling is a long-running background process and does not receive HTTP traffic. Hostless Apps must listen on `PORT` and pass a health check; Workers are designed for processes that run continuously without HTTP requests.
 
-The user selected the Docker runtime (Hostless UI label: `Other`), repository-root `Dockerfile`, working directory `/`, and no custom start command. The image's official Hermes gateway command remains the default. The Hostless resource has **not** been created or deployed; the user is paused at the final review screen. Do not deploy until the remaining validation and secret-entry steps are complete.
+The user selected the Docker runtime (Hostless UI label: `Other`), repository-root `Dockerfile`, working directory `/`, one instance, 0.5 vCPU, 1,024 MB RAM, no custom start command, and no volume. The review showed R$0.00. This uses the documented free pool if no other account resources consume it; do not add capacity or a payment method. The image's official Hermes gateway command remains the default. The Hostless Worker has **not** been created or deployed; the user is paused at the final review screen. Do not deploy until the remaining validation and secret-entry steps are complete.
 
 ## Why backup/restore is required
 
