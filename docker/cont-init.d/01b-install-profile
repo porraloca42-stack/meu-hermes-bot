@@ -5,13 +5,13 @@ set -eu
 export HERMES_HOME=/app/.cache/hermes-home
 export HOME=/app/.cache/hermes-home
 SEED=/opt/hermes/profile-seed
-install -d -o hermes -g hermes "$HERMES_HOME"
-install -d -o hermes -g hermes "$HERMES_HOME/skills"
+mkdir -p "$HERMES_HOME"
+mkdir -p "$HERMES_HOME/skills"
 if [ -f "$SEED/AGENTS.md" ] && [ ! -e "$HERMES_HOME/AGENTS.md" ]; then
-    s6-setuidgid hermes cp "$SEED/AGENTS.md" "$HERMES_HOME/AGENTS.md"
+    cp "$SEED/AGENTS.md" "$HERMES_HOME/AGENTS.md"
 fi
 if [ -d "$SEED/skills" ]; then
-    s6-setuidgid hermes cp -Rn "$SEED/skills/." "$HERMES_HOME/skills/"
+    cp -Rn "$SEED/skills/." "$HERMES_HOME/skills/"
 fi
-s6-setuidgid hermes /usr/bin/python3 /opt/hermes/scripts/merge_hermes_config.py
+/usr/bin/python3 /opt/hermes/scripts/merge_hermes_config.py
 echo "[profile-seed] project charter and initial skills installed without overwriting existing files"
