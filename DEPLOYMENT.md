@@ -74,3 +74,33 @@ The volume `./hermes-data:/opt/data` must be durable and backed up. Do not use a
 7. Back up and restore the Hermes home successfully.
 
 A successful deploy is not production-ready until these tests pass.
+
+
+## Hostless no-volume status — 2026-11-08
+
+The user selected **No volume** in Hostless and set the application data path to `/opt/data`. This avoids creating a paid volume, but it leaves the container filesystem ephemeral. It is not safe to launch the real Telegram agent until restore-before-start and encrypted off-host backups have been implemented and tested.
+
+### DBByte connection contract
+
+The user reports creating a DBByte bucket intended to be named `hermes-backups`. Confirm in the dashboard that it is private. Official DBByte S3 documentation specifies:
+
+- Endpoint: `https://s3.dbbyte.com`
+- Region: `auto`
+- Path-style addressing: enabled
+- Environment variables: `DBBYTE_ACCESS_KEY_ID`, `DBBYTE_SECRET_ACCESS_KEY`, `HERMES_BACKUP_BUCKET`
+
+The dashboard's API Keys flow provides the S3 access-key ID and secret access key as a pair. Both values were exposed in chat and must be rotated before use. Never put either value in this repository, logs, Telegram, or a command pasted into chat. Enter replacements directly in Hostless Secrets only.
+
+### Required implementation before deployment
+
+1. Add a pre-start restore hook that downloads the latest authenticated-encrypted backup into an empty `/opt/data` before the official image's `/init` / s6 supervision tree starts.
+2. Preserve the official image's s6 supervision. The upstream Docker guide states that `gateway run` is managed by s6; replacing the image entrypoint or bypassing `/init` would discard that supervision.
+3. Add a separately supervised periodic backup service (not an unsupervised background shell job). Use the official `hermes backup -o <path>` command, require exit code 0, encrypt with authenticated encryption, upload to the private DBByte bucket, verify the uploaded object, and only then apply retention.
+4. Keep the encryption/decryption key in Hostless Secrets only. Hermes backup ZIPs include sensitive config and credentials; never upload them unencrypted.
+5. Verify S3 upload/download/delete against a disposable test object, then verify encrypted backup/restore using a disposable Hermes profile before deploying the user's real profile.
+6. Confirm DBByte free-plan quotas and behavior at limits in the dashboard. Do not add a payment method or enable paid usage.
+7. Configure a dedicated Telegram bot token and allowed-user restriction only after the storage tests pass.
+
+### Current hard stop
+
+The repository currently has the official-image Dockerfile with `CMD ["gateway", "run"]`, but **does not yet contain** the pre-start restore hook or a supervised backup service. The Hostless resource has not been created. Do not click Deploy/Publish for the real agent yet. Do not claim persistence is working until the above tests pass.
