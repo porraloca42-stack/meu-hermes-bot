@@ -50,7 +50,7 @@ Required:
 - `TELEGRAM_BOT_TOKEN` — token for a new, dedicated Hermes bot, not the bot already used by Make.
 - `TELEGRAM_ALLOWED_USERS` — the owner's numeric Telegram user ID. Do not enable allow-all access.
 
-The DBByte S3 access-key pair previously pasted into chat must be rotated; do not reuse those values. Confirm the bucket is **Private** before uploading anything. The bucket already exists according to the user's report.
+The DBByte S3 access-key pair previously pasted into chat must be rotated; do not reuse those values. Create a fresh bucket-scoped key with ListBucket, GetObject, PutObject, and DeleteObject permissions. Confirm the bucket is **Private** before uploading anything. The bucket already exists according to the user's report.
 
 Do not add a payment method, create a paid Hostless volume, or enable paid inference. The default model is Groq `openai/gpt-oss-120b` on the $0 Free Plan, with a published 8,000 tokens/minute and 200,000 tokens/day cap; it may throttle large or frequent agent turns. The key must be added directly in Hostless Secrets.
 
