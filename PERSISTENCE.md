@@ -73,7 +73,7 @@ DBByte signup has now succeeded for the user via GitHub (user-reported, 2026-11-
 - Current documented S3 operations include PutObject, GetObject, DeleteObject, ListObjectsV2, HeadObject/HeadBucket, and multipart upload. S3 CreateBucket is not available yet, so create bucket in dashboard first. Individual upload limit is 100 MB.
 - API key docs describe separate read/write/delete permissions and bucket-scoped keys for the REST API; do not assume a generic REST API token is interchangeable with S3 access-key credentials. Follow the dashboard's S3 key flow.
 - Free-tier quota details conflict across DBByte pages (5 GB storage is consistent; bandwidth and request quotas differ between docs/pricing/homepage). Before relying on it, inspect the account dashboard's actual quota and verify that limit exhaustion refuses operations rather than automatically charging. Current docs state free-plan limits refuse operations; pricing page language about overage is inconsistent.
-- Account creation is confirmed by user; private bucket, S3 key creation, upload/download, encryption, restore and billing behavior remain untested.
+- Account creation and private bucket creation are confirmed by user. The user pasted an S3 credential pair into chat and asked to proceed without rotating it. Treat that pair as exposed: do not copy it into source, tool calls, logs, GitHub, or Hostless configuration. The implementation must accept a newly generated key pair entered directly into Hostless secrets. Recommend revoking the exposed pair when practical. S3 upload/download, encryption, restore and billing behavior remain untested.
 
 ## Hermes external memory providers
 
