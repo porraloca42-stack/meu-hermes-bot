@@ -86,18 +86,15 @@ Before deployment:
 
 ### Passed
 - Six Python tests: AES-GCM round-trip, tamper rejection, mocked S3 backup/restore, empty-profile behavior, protection of existing state, and config-merge preservation (GitHub Actions run 42530752212).
-- The actual Hermes CLI backup/import round-trip succeeded in Docker CI run 42531234012: it created a ZIP and restored all four fixture files. The overall job then failed only at the profile-seed hook invocation in the test harness.
+- Full custom Docker build and smoke tests passed in run 42531501471, including actual Hermes CLI backup/import, wrapper checks, and profile seeding/config merge in the Hostless writable cache path.
+- Six Python tests passed in run 42531504083, including encryption/tamper checks, mocked S3 round-trip, restore safety, and config-merge preservation.
 
-### In progress / failed earlier attempts corrected
-- The complete Docker smoke test is being re-run after correcting the harness to invoke the s6 profile-seed hook with the expected command path. The real Hermes backup/import portion has already passed.
-- Earlier smoke-test attempts exposed fixture and test-harness issues; do not count those failed attempts as product failures or as passed full-image tests.
-
+### Remaining live acceptance tests
 ### Still required before production
-1. Latest full Docker build and profile-seed smoke test must pass. The actual Hermes backup/import CLI round-trip is already verified.
-2. Live DBByte upload/download/restore using newly rotated credentials.
-3. Restart test proving sessions, memories, skills, and configuration are recovered from DBByte.
-4. Dedicated Telegram bot responds only to the allowed user.
-5. TikTok research and content task acceptance tests.
+1. Live DBByte upload/download/restore using newly rotated credentials.
+2. Restart test proving sessions, memories, skills, and configuration are recovered from DBByte.
+3. Dedicated Telegram bot responds only to the allowed user.
+4. TikTok research and content task acceptance tests.
 
 A mocked S3 test is not a live DBByte test. A Docker build is not proof of live persistence. Do not deploy the real Telegram bot until all remaining acceptance tests pass.
 
