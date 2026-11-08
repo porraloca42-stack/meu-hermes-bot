@@ -8,7 +8,7 @@ The user selected the Docker runtime (Hostless UI label: `Other`), repository-ro
 
 ## Why backup/restore is required
 
-Hermes stores its complete working state under `/opt/data`: SQLite session history, built-in memory, configuration, credentials, skills, cron jobs, logs, and artifacts. The selected Hostless configuration has no attached volume, so the filesystem is ephemeral. The DBByte bucket is used as an encrypted backup/restore target, not as a live-mounted filesystem or SQLite database.
+The official Hermes Docker image defaults to `/opt/data`, but Hostless makes the root filesystem read-only. For the no-volume Hostless Worker, the custom image overrides `HERMES_HOME`, `HOME`, and `HERMES_WRITE_SAFE_ROOT` to `/app/.cache/hermes-home`. Hostless documents `/app/.cache` as a writable 2 GiB scratch area that is cleared on restart. Hermes' SQLite session history, built-in memory, configuration, credentials, skills, cron jobs, logs, and artifacts therefore live there only until a restart; DBByte is the encrypted backup/restore target, not a live-mounted filesystem or SQLite database.
 
 This is not equivalent to a persistent volume. With the current 24-hour backup interval, a crash can lose changes since the last successful backup.
 
@@ -17,12 +17,12 @@ This is not equivalent to a persistent volume. With the current 24-hour backup i
 The custom image extends the official Hermes Docker image and preserves its ENTRYPOINT, s6 supervision, and `gateway run` CMD.
 
 1. Upstream `01-hermes-setup` performs the official data-home setup, ownership, and first-boot seed.
-2. `01a-dbbyte-restore` runs before profile reconciliation. It requires DBByte credentials and the encryption passphrase, then restores the newest complete snapshot into an empty Hermes home. It skips restore when a non-empty `/opt/data/state.db` already exists.
+2. `01a-dbbyte-restore` runs before profile reconciliation. It requires DBByte credentials and the encryption passphrase, then restores the newest complete snapshot into an empty Hermes home. It skips restore when a non-empty `/app/.cache/hermes-home/state.db` already exists.
 3. `01b-install-profile` installs the project charter and TikTok skills only when missing, then merges safe configuration defaults without overwriting existing user choices.
 4. Upstream `015-supervise-perms` and `02-reconcile-profiles` run in their normal order.
 5. The official s6 supervision tree starts the gateway and the custom backup longrun service.
 
-The image sets its working directory to `/opt/data`, so the project's `AGENTS.md` is available as workspace context. The custom `SOUL.md` is used by the upstream first-boot seed.
+The image sets its working directory to `/app/.cache/hermes-home`, so the project's `AGENTS.md` is available as workspace context. The custom `SOUL.md` is used by the upstream first-boot seed.
 
 ## Backup implementation
 
