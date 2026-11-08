@@ -95,7 +95,7 @@ Before deployment, use the Hostless Advanced settings step to add all environmen
 
 ### Passed
 - Full custom Docker build and smoke tests passed in run 42531501471, including actual Hermes CLI backup/import, wrapper checks, and profile seeding/config merge in the Hostless writable cache path.
-- Six Python tests passed in run 42531504083, including encryption/tamper checks, mocked S3 round-trip, restore safety, and config-merge preservation.
+- Seven Python tests passed in run 42532049364, including encryption/tamper checks, mocked S3 round-trip, restore safety, config-merge preservation, and fresh-profile Groq model configuration.
 
 ### Still required before production
 1. Live DBByte upload/download/restore using newly rotated credentials.
