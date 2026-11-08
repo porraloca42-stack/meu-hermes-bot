@@ -103,8 +103,8 @@ Before implementing a backup wrapper or selecting a provider:
 - The repository contains the official Hermes Docker image deployment path and a dedicated migration branch.
 - Hostless free compute has been configured by the user, but no resource has been created yet.
 - No persistent volume is attached.
-- No external object-store account or credentials are configured.
-- No backup automation is implemented or tested.
+- DBByte account and a backup bucket were created by the user; verify the bucket is Private. The credential pair was exposed in chat and must be rotated before use.
+- An initial encrypted backup/restore helper and s6 backup service are now present in the branch, but no Docker build or live S3/restore integration test has passed yet.
 - The GitHub repository is public; it currently contains source/configuration examples only. It must never receive real backups or secrets.
 - Tigris was rejected after the user encountered a card requirement despite its pricing page claiming no card. Do not ask the user to retry it.
 - Do not describe the system as durable or production-ready until all acceptance tests pass.
