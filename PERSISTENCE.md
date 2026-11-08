@@ -116,3 +116,34 @@ Before implementing a backup wrapper or selecting a provider:
 - Hermes backup and restore: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/cli-commands.md
 - Cloudflare R2 free tier: https://developers.cloudflare.com/r2/pricing/
 - Cloudflare R2 getting started / subscription checkout: https://developers.cloudflare.com/r2/get-started/
+
+
+## Implemented DBByte backup wrapper (code present; not yet build-tested)
+
+The migration branch now contains an initial implementation:
+
+- `scripts/dbbyte_backup.py`: Hermes full ZIP backup, AES-256-GCM authenticated encryption, PBKDF2-HMAC-SHA256 key derivation (600,000 iterations), chunked S3 upload (90 MiB objects), per-part SHA-256 checks, manifest written last, and retention of the newest seven complete snapshots.
+- `docker/cont-init.d/01a-dbbyte-restore`: runs after the upstream `01-hermes-setup` and before `02-reconcile-profiles`; requires DBByte credentials and the encryption passphrase, then restores before profile gateway reconciliation.
+- `docker/s6-rc.d/hermes-backup/`: a long-running s6 service that waits 10 minutes, then performs a full encrypted backup every 24 hours.
+- `Dockerfile`: extends the official Hermes image, installs Debian's `python3-boto3` and `python3-cryptography`, adds the restore hook and backup service, and preserves the upstream ENTRYPOINT and `gateway run` CMD.
+
+Required Hostless secrets/environment variables:
+
+- `DBBYTE_ACCESS_KEY_ID`
+- `DBBYTE_SECRET_ACCESS_KEY`
+- `HERMES_BACKUP_ENCRYPTION_PASSPHRASE` — at least 32 UTF-8 bytes; generate a unique random passphrase and store a recovery copy in a password manager. Never send it in chat or commit it.
+- `HERMES_BACKUP_BUCKET=hermes-backups`
+- Optional: `DBBYTE_ENDPOINT=https://s3.dbbyte.com`, `DBBYTE_REGION=auto`, `HERMES_BACKUP_INTERVAL_SECONDS=86400`, `HERMES_BACKUP_RETENTION=7`.
+
+The backup wrapper uses authenticated encryption; wrong passphrases or modified ciphertext fail authentication. Objects are split below DBByte's documented 100 MB object limit. A manifest is published only after every part has been uploaded and checked. Old snapshots are pruned only after a new snapshot has been verified.
+
+**Important limitations / acceptance gates:**
+
+- This is an initial implementation, not yet validated by a successful Docker build or a live DBByte round-trip. The local AES-GCM round-trip and tamper-detection logic was tested separately; this does not validate the container image, S3 permissions, or Hermes import.
+- Backups run every 24 hours after a 10-minute initial delay. Until the first backup completes, there is no off-host recovery point. Expected recovery-point loss can be up to roughly 24 hours after the latest successful backup.
+- The restore hook skips restore when a non-empty `/opt/data/state.db` already exists. On a fresh ephemeral filesystem it restores the newest snapshot before gateway reconciliation.
+- The script requires the DBByte S3 key pair and encryption passphrase. Missing secrets cause startup to fail closed rather than silently launching an empty agent.
+- DBByte's current pricing page lists the free plan as 5 GB storage, 10 GB monthly bandwidth, 1 million requests and one bucket, but also describes bandwidth overage pricing. No payment method or paid upgrade may be added. Verify account-level quota behavior before production use.
+- The DBByte bucket must be Private. The user must confirm this in the dashboard; do not upload backups until confirmed.
+- The previously exposed credential pair must be revoked/rotated before entering credentials into Hostless. Do not reuse values pasted into chat.
+- The official Hermes backup command includes sensitive state such as configuration and credentials. The AES-GCM encryption layer is mandatory; do not bypass it.
