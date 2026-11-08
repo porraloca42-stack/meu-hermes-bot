@@ -1,0 +1,11 @@
+#!/command/with-contenv sh
+# Runs after 01-hermes-setup and before 02-reconcile-profiles.
+set -eu
+export HERMES_HOME=/opt/data
+export HOME=/opt/data
+if [ -z "$DBBYTE_ACCESS_KEY_ID" ] || [ -z "$DBBYTE_SECRET_ACCESS_KEY" ]; then
+    echo "[dbbyte-restore] DBByte S3 credentials missing; skipping remote restore"
+    exit 0
+fi
+cd /opt/data
+exec s6-setuidgid hermes /usr/bin/python3 /opt/hermes/scripts/dbbyte_backup.py restore
