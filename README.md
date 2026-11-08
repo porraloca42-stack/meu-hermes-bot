@@ -15,13 +15,13 @@ This repository keeps the original prototype on `main` untouched. The active Her
 1. Read [DEPLOYMENT.md](DEPLOYMENT.md) before creating infrastructure.
 2. Review [AGENTS.md](AGENTS.md) and [SOUL.md](SOUL.md).
 3. On a machine/container with a durable Hermes home, run `bash install-hermes-profile.sh`.
-4. For the no-card bootstrap, Hermes uses its built-in Nous guest model; no model API key is needed initially. Add a new dedicated Telegram bot token and allowed-user ID directly to the host's secret manager. Never commit secrets.
+4. Add `GROQ_API_KEY` (for the $0 Groq Free Plan) and a new dedicated Telegram bot token plus allowed-user ID directly to the host's secret manager. Never commit secrets.
 5. Validate persistence and all acceptance tests before treating the agent as ready.
 
 ## Important
 
 Deploy as a standalone Hostless Worker (Telegram polling does not serve HTTP). The Hostless resource has not been created or deployed yet; the user is paused at the final review screen. No paid volume or payment method is required or authorized.
 
-The selected Hostless filesystem is ephemeral, so the custom image restores the latest encrypted snapshot before starting Hermes and periodically backs up the complete Hermes home to DBByte. This is not equivalent to a mounted persistent volume; the current recovery window is up to 24 hours. The built-in Nous guest inference route is enabled as a no-card bootstrap, but it is a limited free model with standard rate limits, not unlimited frontier inference. Current Hermes web tools also have keyless free search/extract fallbacks, subject to provider rate limits.
+The selected Hostless filesystem is ephemeral, so the custom image restores the latest encrypted snapshot before starting Hermes and periodically backs up the complete Hermes home to DBByte. This is not equivalent to a mounted persistent volume; the current recovery window is up to 24 hours. The default inference route is Groq `openai/gpt-oss-120b` on its $0 Free Plan (8,000 tokens/minute and 200,000 tokens/day). It is rate-limited, not unlimited. Hermes' keyless web search/extract providers are separate and also rate-limited. Current Hermes web tools also have keyless free search/extract fallbacks, subject to provider rate limits.
 
-The full Docker build and smoke tests passed (run 42531501471), including the actual Hermes CLI backup/import round-trip, wrapper checks, and profile seeding in the Hostless writable cache path. All six Python persistence tests passed (run 42531504083). Live DBByte upload/download/restore and restart tests remain mandatory. Rotate the exposed S3 credential pair, confirm the bucket is Private, and keep all replacement secrets outside GitHub and chat. Rotate the exposed S3 credential pair, confirm the bucket is Private, and keep all replacement secrets outside GitHub and chat.
+The full Docker build and smoke tests passed (run 42531501471), including the actual Hermes CLI backup/import round-trip, wrapper checks, and profile seeding in the Hostless writable cache path. All six Python persistence tests passed (run 42531504083). Live DBByte upload/download/restore and restart tests remain mandatory. Rotate the exposed S3 credential pair, confirm the bucket is Private, and keep all replacement secrets outside GitHub and chat.
