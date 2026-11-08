@@ -26,7 +26,7 @@ Hostless runs workloads with a read-only root filesystem. Without an attached vo
 - `HERMES_HOME=/app/.cache/hermes-home`
 - `HOME=/app/.cache/hermes-home`
 - `HERMES_WRITE_SAFE_ROOT=/app/.cache/hermes-home`
-- Working directory: `/app/.cache/hermes-home`
+- Docker `WORKDIR`: `/app/.cache` (the main wrapper enters `HERMES_HOME` after initialization)
 
 Hostless documents `/app/.cache` as writable scratch storage (2 GiB) and deletes it on restart. This is intentionally ephemeral. The custom image restores the newest encrypted DBByte snapshot before starting Hermes and backs up the full Hermes home every 24 hours. Monitor home size; do not assume this scratch directory is durable.
 
