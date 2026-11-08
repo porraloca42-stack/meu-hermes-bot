@@ -64,16 +64,13 @@ fi
 # don't try to write to /root.
 export HOME="${HERMES_HOME:-/opt/data}"
 
-# Save the Docker -w (or default) working directory before init
-# scripts cd to /opt/data, so the container starts in the
-# directory the user requested.
+# Save an explicitly supplied Docker -w directory; otherwise use the configured
+# Hermes home so workspace context files (for example AGENTS.md) are loaded.
 _hermes_orig_cwd="${HERMES_ORIG_CWD:-${HERMES_HOME:-/opt/data}}"
 
 cd "${HERMES_HOME:-/opt/data}"
 
-# Restore the original working directory before handing off to
-# the user's command so `hermes chat` starts in the Docker -w
-# directory, not /opt/data.
+# Restore the selected working directory before handing off to the command.
 cd "$_hermes_orig_cwd"
 
 if [ $# -eq 0 ]; then
