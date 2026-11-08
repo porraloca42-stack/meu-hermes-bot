@@ -1,0 +1,16 @@
+#!/command/with-contenv sh
+# Install the project charter and initial skills after any remote restore.
+# Never overwrite files already present in the Hermes home.
+set -eu
+export HERMES_HOME=/opt/data
+export HOME=/opt/data
+SEED=/opt/hermes/profile-seed
+install -d -o hermes -g hermes "$HERMES_HOME"
+install -d -o hermes -g hermes "$HERMES_HOME/skills"
+if [ -f "$SEED/AGENTS.md" ] && [ ! -e "$HERMES_HOME/AGENTS.md" ]; then
+    s6-setuidgid hermes cp "$SEED/AGENTS.md" "$HERMES_HOME/AGENTS.md"
+fi
+if [ -d "$SEED/skills" ]; then
+    s6-setuidgid hermes cp -Rn "$SEED/skills/." "$HERMES_HOME/skills/"
+fi
+echo "[profile-seed] project charter and initial skills installed without overwriting existing files"
