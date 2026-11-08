@@ -55,7 +55,7 @@ Do not add a payment method, create a paid Hostless volume, or enable paid infer
 
 ## Free inference bootstrap
 
-The profile merger keeps Hermes' built-in Nous guest route enabled (`nous.guest: true`). With no other provider credentials, a fresh Hermes installation can bootstrap the no-sign-in free tier and use the single `nous/welcome` model. This is a limited bootstrap, not unlimited frontier inference: it has standard rate limits and does not include paid Tool Gateway services such as hosted web search, image generation, TTS, or cloud browser. If the free endpoint is closed or rate-limited, Hermes must report that honestly rather than silently using a paid provider.
+The profile merger keeps Hermes' built-in Nous guest route enabled (`nous.guest: true`). With no other provider credentials, a fresh Hermes installation can bootstrap the no-sign-in free tier and use the single `nous/welcome` model. This is a limited bootstrap, not unlimited frontier inference: it has standard rate limits. Hermes' current web tooling can use managed `web_search` for a Nous guest identity and a keyless free-provider rotation for `web_search`/`web_extract`; these are rate-limited. Paid image generation, TTS, and hosted cloud-browser services are not included. If a free endpoint is closed or rate-limited, Hermes must report that honestly rather than silently using a paid provider.
 
 ## Validation status
 
