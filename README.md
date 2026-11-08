@@ -4,7 +4,7 @@ This repository keeps the original prototype on `main` untouched. The active Her
 
 ## What is prepared
 
-- Official Hermes Docker gateway image, successfully built in GitHub Actions with CLI and backup-dependency smoke tests; DBByte live round-trip still pending.
+- Custom Docker image extends the official Hermes gateway, keeps s6 supervision, seeds the TikTok operating charter and skills, and includes encrypted DBByte backup/restore. Latest image build and actual Hermes backup/import smoke test are still running; live DBByte round-trip remains pending.
 - Operating charter and agent identity: `AGENTS.md`, `SOUL.md`.
 - Initial skills for research, strategy, script production, analytics learning, and source/claim audits.
 - Conservative Hermes configuration example and a non-destructive profile installer.
@@ -20,6 +20,8 @@ This repository keeps the original prototype on `main` untouched. The active Her
 
 ## Important
 
-The no-card hosting requirement is still an open engineering constraint: a free always-on process is not sufficient if its filesystem is ephemeral. The selected host must preserve the Hermes home across restarts, including sessions, memories, and skills. See [DEPLOYMENT.md](DEPLOYMENT.md).
+Deploy as a standalone Hostless Worker (Telegram polling does not serve HTTP). The Hostless resource has not been created or deployed yet; the user is paused at the final review screen. No paid volume or payment method is required or authorized.
 
-This branch is a prepared build, not a deployed or production-tested service. The custom Docker image build and CLI/dependency smoke tests passed (run 42529730312). Three automated tests also passed, including encrypted backup/restore against a simulated S3 service (run 42530037493). This is not a live DBByte test; live DBByte upload/download, actual Hermes restore, and restart acceptance tests remain mandatory before deployment. Rotate the exposed S3 credential pair, use a private bucket, and keep all replacement secrets outside GitHub and chat.
+The selected Hostless filesystem is ephemeral, so the custom image restores the latest encrypted snapshot before starting Hermes and periodically backs up the complete Hermes home to DBByte. This is not equivalent to a mounted persistent volume; the current recovery window is up to 24 hours. The built-in Nous guest inference route is enabled as a no-card bootstrap, but it is a limited free model with standard rate limits, not unlimited frontier inference.
+
+The Python test workflow passed encryption/tamper checks, mocked S3 backup/restore, and config-merge preservation (run 42530752212). Earlier Docker builds passed basic image and CLI smoke tests; the latest build is adding an actual Hermes CLI backup/import round-trip and profile-seeding checks. Live DBByte upload/download/restore and restart tests are still mandatory. Rotate the exposed S3 credential pair, confirm the bucket is Private, and keep all replacement secrets outside GitHub and chat.
