@@ -61,7 +61,7 @@ jobs:
             test -f /opt/hermes/profile-seed/skills/tiktok-research/SKILL.md
             test -f /opt/hermes/docker/SOUL.md
             sh -n /etc/cont-init.d/01b-install-profile
-            /etc/cont-init.d/01b-install-profile
+            PATH="/command:$PATH" sh /etc/cont-init.d/01b-install-profile
             test -f /app/.cache/hermes-home/AGENTS.md
             test -f /app/.cache/hermes-home/skills/tiktok-research/SKILL.md
             grep -q "memory_enabled: true" /app/.cache/hermes-home/config.yaml
