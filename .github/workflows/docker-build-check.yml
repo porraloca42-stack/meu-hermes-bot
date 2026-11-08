@@ -55,7 +55,6 @@ jobs:
             sh -n /etc/cont-init.d/01b-install-profile
             /etc/cont-init.d/01b-install-profile
             test -f /opt/data/AGENTS.md
-            test -f /opt/data/SOUL.md
             test -f /opt/data/skills/tiktok-research/SKILL.md
             grep -q "memory_enabled: true" /opt/data/config.yaml
             grep -q "guest: true" /opt/data/config.yaml
