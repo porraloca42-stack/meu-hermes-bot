@@ -32,7 +32,9 @@ jobs:
       - name: Smoke-test Hermes CLI and backup dependencies
         run: |
           docker run --rm --entrypoint /bin/sh hermes-agent:ci-check -ec '
-            python3 -c "import boto3, cryptography"
+            python3 -c "import boto3, cryptography, yaml"
+            python3 -m py_compile /opt/hermes/scripts/merge_hermes_config.py
+            test -f /opt/hermes/profile-seed/skills/tiktok-research/SKILL.md
             command -v hermes
             hermes backup --help >/dev/null
             hermes import --help >/dev/null
