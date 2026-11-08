@@ -38,9 +38,13 @@ R2 advertises a free monthly allowance for Standard storage (10 GB-month, 1 mill
 R2 is object storage. It is not a POSIX volume and must not be mounted as `/opt/data` or used as a live SQLite database.
 
 
-## Additional object-store candidate: Tigris (promising, not yet activated)
+## Tigris signup failure reported by user (do not use)
 
-Tigris currently advertises an ongoing monthly free allowance on its pricing page:
+Although Tigris's public pricing page says "No card to start", the user reached its signup flow and was asked for a payment card. The user's observed signup requirement takes precedence over the marketing page for this project. Tigris is rejected for now; do not send the user back to its signup or ask them to add a card.
+
+## Alternative object-store candidates (not yet user-tested)
+
+DBByte currently documents a no-card free account and an S3-compatible API. Its published plan details differ between the homepage and detailed pricing/docs, so use the more conservative detailed figures until confirmed in an account:
 - 5 GB Standard storage.
 - 10,000 Class A requests (PUT/COPY/POST/LIST).
 - 100,000 Class B requests (GET and other requests).
@@ -57,11 +61,11 @@ This is a stronger candidate than R2 for the user's no-card requirement. However
 - Never store Hermes backups in this public GitHub repository. The repository is currently public; backups may contain Telegram/API credentials and private conversation history. Only source code and sanitized examples belong here.
 
 The current Tigris pricing page and S3 integration guidance:
-- https://www.tigrisdata.com/pricing/
-- https://www.tigrisdata.com/features/
-- https://www.npmjs.com/package/@tigrisdata/cli
+- https://dbbyte.com/pricing
+- https://dbbyte.com/docs
+- Secondary alternative: https://www.stored.ge/docs/faq and https://www.stored.ge/legal/terms (5 GB no-card free tier; no contractual SLA yet, so treat as a test-only candidate)
 
-Tigris is still only a candidate. No account, bucket, access key, or backup integration has been created.
+DBByte and Stored are still candidates only. No account, bucket, access key, or backup integration has been created. Do not claim either has been signup-tested by the user.
 
 ## Hermes external memory providers
 
@@ -94,6 +98,7 @@ Before implementing a backup wrapper or selecting a provider:
 - No external object-store account or credentials are configured.
 - No backup automation is implemented or tested.
 - The GitHub repository is public; it currently contains source/configuration examples only. It must never receive real backups or secrets.
+- Tigris was rejected after the user encountered a card requirement despite its pricing page claiming no card. Do not ask the user to retry it.
 - Do not describe the system as durable or production-ready until all acceptance tests pass.
 
 ## Official references
