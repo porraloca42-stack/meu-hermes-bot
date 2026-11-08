@@ -5,7 +5,7 @@ import os
 import tempfile
 import yaml
 
-home = Path(os.environ.get("HERMES_HOME", "/opt/data"))
+home = Path(os.environ.get("HERMES_HOME", "/app/.cache/hermes-home"))
 path = home / "config.yaml"
 config = {}
 if path.exists():
