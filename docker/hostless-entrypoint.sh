@@ -68,4 +68,4 @@ if [ "$PERSISTENCE_READY" -eq 1 ]; then
 fi
 echo "[hostless-start] starting Hermes gateway"
 if [ "$#" -eq 0 ]; then set -- gateway run; fi
-exec /opt/hermes/bin/hermes "$@"
+exec /opt/hermes/.venv/bin/hermes "$@"
