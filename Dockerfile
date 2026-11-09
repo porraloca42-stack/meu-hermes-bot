@@ -17,8 +17,7 @@ COPY .hermes/skills/ /opt/hermes/profile-seed/skills/
 
 RUN chmod 0755 /opt/hermes/scripts/dbbyte_backup.py /opt/hermes/scripts/merge_hermes_config.py /opt/hermes/docker/hostless-entrypoint.sh /opt/hermes/bin/hermes && \
     chmod 0644 /etc/profile.d/hermes.sh && \
-    install -d -o 10000 -g 10000 -m 0700 /app/.cache/hermes-home
-
+    
 # Hostless exposes writable /app/.cache but read-only /run. Start the container
 # directly as Hermes UID/GID 10000: no runtime setuid/setgid or s6 privilege drop.
 ENV HERMES_HOME=/app/.cache/hermes-home
