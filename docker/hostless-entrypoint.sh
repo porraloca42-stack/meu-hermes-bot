@@ -1,21 +1,25 @@
 #!/bin/sh
-# Hostless startup: bypass /init because this runtime exposes /run read-only,
-# while s6-overlay requires a writable/executable /run tmpfs.
+# Hostless startup: run directly as the unprivileged Hermes account.
+# No s6 init, chown, chmod, setgroups, setgid, or setuid calls.
 set -eu
 
 export HERMES_HOME="${HERMES_HOME:-/app/.cache/hermes-home}"
 export HOME="$HERMES_HOME"
 export HERMES_WRITE_SAFE_ROOT="$HERMES_HOME"
-export PATH="/command:/opt/hermes/bin:/opt/hermes/.venv/bin:$HERMES_HOME/.local/bin:$PATH"
+export PATH="/opt/hermes/.venv/bin:/opt/hermes/bin:$HERMES_HOME/.local/bin:$PATH"
 umask 077
 
-echo "[hostless-start] preparing writable Hermes home at $HERMES_HOME"
-# Hostless runs this container as its restricted root user. Keep files owned
-# by that runtime UID; do not chown or attempt s6-setuidgid (both need extra caps).
+echo "[hostless-start] runtime identity: $(id)"
+echo "[hostless-start] preparing Hermes home at $HERMES_HOME"
 mkdir -p "$HERMES_HOME"
+if [ ! -w "$HERMES_HOME" ]; then
+  echo "[hostless-start] ERROR: $HERMES_HOME is not writable by UID $(id -u); check Hostless cache mount permissions"
+  exit 73
+fi
+probe="$HERMES_HOME/.write-test-$$"
+: > "$probe"
+rm -f "$probe"
 
-# Remote persistence is optional for boot, but required for durable memory.
-# Missing variables must not prevent the Telegram gateway from starting.
 PERSISTENCE_READY=1
 for name in DBBYTE_ACCESS_KEY_ID DBBYTE_SECRET_ACCESS_KEY HERMES_BACKUP_ENCRYPTION_PASSPHRASE DBBYTE_ENDPOINT DBBYTE_REGION HERMES_BACKUP_BUCKET; do
   eval 'value=${'"$name"'-}'
@@ -25,7 +29,6 @@ for name in DBBYTE_ACCESS_KEY_ID DBBYTE_SECRET_ACCESS_KEY HERMES_BACKUP_ENCRYPTI
   fi
 done
 
-# Prepare the standard writable layout.
 mkdir -p \
   "$HERMES_HOME/backups" "$HERMES_HOME/cron" "$HERMES_HOME/sessions" \
   "$HERMES_HOME/logs/gateways" "$HERMES_HOME/hooks" "$HERMES_HOME/memories" \
@@ -39,7 +42,6 @@ else
   echo "[hostless-start] continuing without remote persistence; data may be lost on restart"
 fi
 
-# Seed upstream defaults only when absent; restored/user files always win.
 if [ ! -f "$HERMES_HOME/config.yaml" ] && [ -f /opt/hermes/cli-config.yaml.example ]; then
   cp /opt/hermes/cli-config.yaml.example "$HERMES_HOME/config.yaml"
 fi
@@ -47,37 +49,25 @@ if [ ! -f "$HERMES_HOME/.env" ]; then touch "$HERMES_HOME/.env"; fi
 if [ ! -f "$HERMES_HOME/SOUL.md" ] && [ -f /opt/hermes/docker/SOUL.md ]; then
   cp /opt/hermes/docker/SOUL.md "$HERMES_HOME/SOUL.md"
 fi
-chmod 600 "$HERMES_HOME/.env"
+if [ ! -f "$HERMES_HOME/AGENTS.md" ] && [ -f /opt/hermes/profile-seed/AGENTS.md ]; then
+  cp /opt/hermes/profile-seed/AGENTS.md "$HERMES_HOME/AGENTS.md"
+fi
+if [ -d /opt/hermes/profile-seed/skills ]; then
+  cp -Rn /opt/hermes/profile-seed/skills/. "$HERMES_HOME/skills/" || true
+fi
+chmod 600 "$HERMES_HOME/.env" 2>/dev/null || true
+/usr/bin/python3 /opt/hermes/scripts/merge_hermes_config.py
 
-# Ensure the local gateway control API key exists without replacing a supplied key.
 if [ -z "${API_SERVER_KEY:-}" ] && ! grep -q '^API_SERVER_KEY=..*' "$HERMES_HOME/.env"; then
   key="$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
-  sh -c "printf 'API_SERVER_KEY=%s\\n' '$key' >> '$HERMES_HOME/.env'"
+  printf 'API_SERVER_KEY=%s\n' "$key" >> "$HERMES_HOME/.env"
 fi
 
-# Run the existing root bootstrap hook; it drops individual writes to hermes.
-PATH="/command:$PATH" sh /etc/cont-init.d/01b-install-profile
-if [ -f /opt/hermes/tools/skills_sync.py ]; then
-  /opt/hermes/.venv/bin/python /opt/hermes/tools/skills_sync.py || echo "[hostless-start] WARNING: bundled skill sync failed; continuing"
-fi
-
-# Keep encrypted backup running alongside the gateway when configured.
 if [ "$PERSISTENCE_READY" -eq 1 ]; then
   /usr/bin/python3 /opt/hermes/scripts/dbbyte_backup.py loop &
   echo "[hostless-start] encrypted DBByte backup loop started"
 fi
-echo "[hostless-start] starting Hermes gateway"
+
+echo "[hostless-start] starting Hermes gateway as UID $(id -u)"
 if [ "$#" -eq 0 ]; then set -- gateway run; fi
-# The Hostless runtime forbids setgroups(), which s6-setuidgid requires.
-# Drop only the primary GID/UID (without changing supplementary groups) and
-# run Hermes as its baked-in unprivileged account. Make the isolated data
-# directory traversable/writable first because Hostless root cannot chown it.
-chmod -R a+rwX "$HERMES_HOME"
-echo "[hostless-start] dropping gateway privileges to the hermes account (UID/GID 10000)"
-exec /usr/bin/python3 -c '
-import os, pwd, sys
-account = pwd.getpwnam("hermes")
-os.setgid(account.pw_gid)
-os.setuid(account.pw_uid)
-os.execv("/opt/hermes/.venv/bin/hermes", ["/opt/hermes/.venv/bin/hermes", *sys.argv[1:]])
-' "$@"
+exec /opt/hermes/.venv/bin/hermes "$@"
