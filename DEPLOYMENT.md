@@ -21,21 +21,14 @@ This uses the documented free allowance if no other resources consume the accoun
 
 ## Hostless filesystem compatibility
 
-Hostless runs workloads with a read-only root filesystem. Without an attached volume, the official Hermes default `/opt/data` is not a safe writable path. The custom image therefore overrides:
+Hostless runs workloads with a read-only root filesystem. Without an attached volume, the official Hermes default `/opt/data` is not a safe writable path. The custom image starts directly as UID/GID 10000:10000 using Docker's `USER` instruction. It does not call setuid, setgid, setgroups, s6-setuidgid, chown, or chmod at runtime. It prefers `/app/.cache/hermes-home` (Hostless documents a 2 GiB writable cache mount). If that mount is not writable by UID 10000, startup falls back to `/tmp/hermes-home` (500 MiB limit). Both are ephemeral: Hostless deletes their contents when the process restarts. The custom image restores the newest encrypted DBByte snapshot before starting Hermes and backs up the full Hermes home every 24 hours.
 
-- `HERMES_HOME=/app/.cache/hermes-home`
-- `HOME=/app/.cache/hermes-home`
-- `HERMES_WRITE_SAFE_ROOT=/app/.cache/hermes-home`
-- Docker `WORKDIR`: `/app/.cache` (the main wrapper enters `HERMES_HOME` after initialization)
-
-Hostless documents `/app/.cache` as writable scratch storage (2 GiB) and deletes it on restart. This is intentionally ephemeral. The custom image restores the newest encrypted DBByte snapshot before starting Hermes and backs up the full Hermes home every 24 hours. Monitor home size; do not assume this scratch directory is durable.
-
-The image preserves the official Hermes ENTRYPOINT, s6 supervision, and `gateway run` command. Startup order:
-1. Upstream `01-hermes-setup` prepares the configured Hermes home and seeds the custom SOUL.
-2. `01a-dbbyte-restore` restores the latest complete snapshot into an empty home.
-3. `01b-install-profile` adds `AGENTS.md` and TikTok skills only when missing, then merges safe defaults without overwriting user settings.
-4. Upstream supervision-permissions and profile-reconciliation hooks run.
-5. The gateway and encrypted backup longrun service start.
+The custom entrypoint bypasses s6 because Hostless exposes `/run` read-only. Startup order:
+1. Start as the unprivileged Hermes UID/GID 10000:10000.
+2. Select a writable scratch home and verify write access.
+3. Restore the latest complete DBByte snapshot when all required secrets are present.
+4. Seed `SOUL.md`, `AGENTS.md`, and skills without overwriting existing files; merge safe defaults.
+5. Start the encrypted backup loop and Hermes gateway.
 
 ## Hermes project profile
 
