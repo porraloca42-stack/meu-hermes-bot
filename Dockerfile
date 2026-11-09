@@ -14,17 +14,19 @@ COPY docker/profile-hermes-path.sh /etc/profile.d/hermes.sh
 COPY SOUL.md /opt/hermes/docker/SOUL.md
 COPY AGENTS.md /opt/hermes/profile-seed/AGENTS.md
 COPY .hermes/skills/ /opt/hermes/profile-seed/skills/
-COPY docker/cont-init.d/01b-install-profile /etc/cont-init.d/01b-install-profile
 
-RUN chmod 0755 /opt/hermes/scripts/dbbyte_backup.py /opt/hermes/scripts/merge_hermes_config.py /opt/hermes/docker/hostless-entrypoint.sh /opt/hermes/bin/hermes /etc/cont-init.d/01b-install-profile && chmod 0644 /etc/profile.d/hermes.sh
+RUN chmod 0755 /opt/hermes/scripts/dbbyte_backup.py /opt/hermes/scripts/merge_hermes_config.py /opt/hermes/docker/hostless-entrypoint.sh /opt/hermes/bin/hermes && \
+    chmod 0644 /etc/profile.d/hermes.sh && \
+    install -d -o 10000 -g 10000 -m 0700 /app/.cache/hermes-home
 
-# Hostless exposes writable /app/.cache but read-only /run. Bypass upstream
-# /init/s6 startup, keep the gateway as PID 1, and run DBByte backup alongside it.
+# Hostless exposes writable /app/.cache but read-only /run. Start the container
+# directly as Hermes UID/GID 10000: no runtime setuid/setgid or s6 privilege drop.
 ENV HERMES_HOME=/app/.cache/hermes-home
 ENV HERMES_WRITE_SAFE_ROOT=/app/.cache/hermes-home
 ENV HOME=/app/.cache/hermes-home
-ENV PATH="/app/.cache/hermes-home/.local/bin:${PATH}"
+ENV PATH="/app/.cache/hermes-home/.local/bin:/opt/hermes/.venv/bin:/opt/hermes/bin:${PATH}"
 
 WORKDIR /app/.cache
+USER 10000:10000
 ENTRYPOINT ["/opt/hermes/docker/hostless-entrypoint.sh"]
 CMD ["gateway", "run"]
