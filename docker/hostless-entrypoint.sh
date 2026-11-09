@@ -23,9 +23,6 @@ else
 fi
 export HERMES_HOME HOME="$HERMES_HOME" HERMES_WRITE_SAFE_ROOT="$HERMES_HOME"
 echo "[hostless-start] preparing Hermes home at $HERMES_HOME"
-probe="$HERMES_HOME/.write-test-$"
-: > "$probe"
-rm -f "$probe"
 probe="$HERMES_HOME/.write-test-$$"
 : > "$probe"
 rm -f "$probe"
@@ -47,7 +44,15 @@ mkdir -p \
   "$HERMES_HOME/platforms/pairing"
 
 if [ "$PERSISTENCE_READY" -eq 1 ]; then
-  /usr/bin/python3 /opt/hermes/scripts/dbbyte_backup.py restore
+  echo "[hostless-start] attempting encrypted DBByte restore"
+  if /usr/bin/python3 /opt/hermes/scripts/dbbyte_backup.py restore; then
+    echo "[hostless-start] DBByte restore completed"
+  else
+    # Never fail the whole Worker on a transient backup-store outage, and do
+    # not start a fresh backup loop that could overwrite the last good snapshot.
+    echo "[hostless-start] WARNING: DBByte restore failed; starting gateway without backup writes to protect existing snapshots"
+    PERSISTENCE_READY=0
+  fi
 else
   echo "[hostless-start] continuing without remote persistence; data may be lost on restart"
 fi
@@ -78,6 +83,7 @@ if [ "$PERSISTENCE_READY" -eq 1 ]; then
   echo "[hostless-start] encrypted DBByte backup loop started"
 fi
 
+echo "[hostless-start] startup checks complete; persistence=$PERSISTENCE_READY"
 echo "[hostless-start] starting Hermes gateway as UID $(id -u)"
 if [ "$#" -eq 0 ]; then set -- gateway run; fi
 exec /opt/hermes/.venv/bin/hermes "$@"
