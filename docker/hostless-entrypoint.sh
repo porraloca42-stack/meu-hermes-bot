@@ -68,4 +68,16 @@ if [ "$PERSISTENCE_READY" -eq 1 ]; then
 fi
 echo "[hostless-start] starting Hermes gateway"
 if [ "$#" -eq 0 ]; then set -- gateway run; fi
-exec /opt/hermes/.venv/bin/hermes "$@"
+# The Hostless runtime forbids setgroups(), which s6-setuidgid requires.
+# Drop only the primary GID/UID (without changing supplementary groups) and
+# run Hermes as its baked-in unprivileged account. Make the isolated data
+# directory traversable/writable first because Hostless root cannot chown it.
+chmod -R a+rwX "$HERMES_HOME"
+echo "[hostless-start] dropping gateway privileges to the hermes account (UID/GID 10000)"
+exec /usr/bin/python3 -c '
+import os, pwd, sys
+account = pwd.getpwnam("hermes")
+os.setgid(account.pw_gid)
+os.setuid(account.pw_uid)
+os.execv("/opt/hermes/.venv/bin/hermes", ["/opt/hermes/.venv/bin/hermes", *sys.argv[1:]])
+' "$@"
