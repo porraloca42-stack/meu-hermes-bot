@@ -3,19 +3,29 @@
 # No s6 init, chown, chmod, setgroups, setgid, or setuid calls.
 set -eu
 
-export HERMES_HOME="${HERMES_HOME:-/app/.cache/hermes-home}"
-export HOME="$HERMES_HOME"
-export HERMES_WRITE_SAFE_ROOT="$HERMES_HOME"
-export PATH="/opt/hermes/.venv/bin:/opt/hermes/bin:$HERMES_HOME/.local/bin:$PATH"
+export PATH="/opt/hermes/.venv/bin:/opt/hermes/bin:$PATH"
 umask 077
 
 echo "[hostless-start] runtime identity: $(id)"
-echo "[hostless-start] preparing Hermes home at $HERMES_HOME"
-mkdir -p "$HERMES_HOME"
-if [ ! -w "$HERMES_HOME" ]; then
-  echo "[hostless-start] ERROR: $HERMES_HOME is not writable by UID $(id -u); check Hostless cache mount permissions"
-  exit 73
+# Prefer Hostless's 2 GiB cache mount. If its ownership blocks UID 10000,
+# use /tmp (500 MiB) rather than attempting forbidden chmod/chown operations.
+candidate="${HERMES_HOME:-/app/.cache/hermes-home}"
+if mkdir -p "$candidate" 2>/dev/null && [ -w "$candidate" ]; then
+  HERMES_HOME="$candidate"
+else
+  HERMES_HOME=/tmp/hermes-home
+  mkdir -p "$HERMES_HOME"
+  if [ ! -w "$HERMES_HOME" ]; then
+    echo "[hostless-start] ERROR: neither /app/.cache nor /tmp is writable by UID $(id -u)"
+    exit 73
+  fi
+  echo "[hostless-start] cache mount unavailable to UID $(id -u); using /tmp (500 MiB limit)"
 fi
+export HERMES_HOME HOME="$HERMES_HOME" HERMES_WRITE_SAFE_ROOT="$HERMES_HOME"
+echo "[hostless-start] preparing Hermes home at $HERMES_HOME"
+probe="$HERMES_HOME/.write-test-$"
+: > "$probe"
+rm -f "$probe"
 probe="$HERMES_HOME/.write-test-$$"
 : > "$probe"
 rm -f "$probe"
